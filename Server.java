@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //package cs347;
 
 import java.io.BufferedReader;
@@ -275,4 +276,6 @@ class Message {
 	public String getMessage(){
 		return message;
 	}
+
+>>>>>>> 70db11ce9b88c15cc212d7e9bfa1281bfed1a9e5
 }
