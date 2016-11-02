@@ -1,7 +1,8 @@
 import java.io.BufferedReader;
+import java.io.Writer;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.Writer;
+import java.io.PrintWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -22,6 +23,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.io.FileNotFoundException;
 
 public class Server {
 
@@ -96,19 +98,17 @@ public class Server {
 
 	public final void writeLog(String logMessage) {
 		if (logExists()) {
-			try {
-				Writer output = new BufferedWriter(new FileWriter(this.logFilePath, true));
-				output.append("\r\n");
-				output.append(logMessage);
-				System.out.println(logMessage);
-				output.close();
+			try (
+				Writer fw = new FileWriter(logFilePath, true);
+				Writer bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)
+			) {
+				out.println(logMessage);
 			} catch (IOException e) {
-				System.err.println("Error: IOException in writeLog");
 				e.printStackTrace();
 			}
 		} else {
-			System.err.println("Log does not exist, not creating yet");
-			System.err.println(logMessage);
+			System.err.println("Tried to write log but log file does not exist");
 		}
 	}
 
@@ -163,7 +163,7 @@ public class Server {
 			if (i < serverNumber) {
 				//listen
 				connections[i] = new Connection(this.serverSocket.accept());
-				connections[i].setMessage(new Message<String>("yolo$wag " + i));
+				connections[i].setMessage(new Message<Integer>(0));
 			} else {
 				int port = servers[0].getPort();
 				InetAddress address = servers[0].getAddress();
@@ -173,7 +173,7 @@ public class Server {
 				while (count < 10 && !connected) {
 					try {
 						connections[i] = new Connection(new Socket(address, port));
-						connections[i].setMessage(new Message<String>("lolololololllllol " + i));
+						connections[i].setMessage(new Message<Integer>(1));
 						connected = true;
 					} catch (ConnectException e) {
 						System.err.println("Connection refused");
