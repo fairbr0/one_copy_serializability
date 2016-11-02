@@ -35,77 +35,77 @@ public class Server {
 	public final String databaseFilePath;
 	public final String logFilePath;
 	private ServerSocket clientSocket;
-   	private ServerSocket serverSocket;
+	private ServerSocket serverSocket;
 	private Thread clientListenerThread;
-    	private Connection[] connections;
+	private Connection[] connections;
 
 
-    	private static int defaultValue() {
+	private static int defaultValue() {
 		return 0;
-    	}
+	}
 
-    	public Server(String databaseFilePath) throws IOException {
-        	this(databaseFilePath, Server.defaultValue());
-    	}
+	public Server(String databaseFilePath) throws IOException {
+		this(databaseFilePath, Server.defaultValue());
+	}
 
-    	public Server(String databaseFilePath, int value) throws IOException {
-        	this.databaseFilePath = databaseFilePath;
-        	if (!this.databaseExists()) {
-            		this.writeDatabase(value);
-        	}
+	public Server(String databaseFilePath, int value) throws IOException {
+		this.databaseFilePath = databaseFilePath;
+		if (!this.databaseExists()) {
+			this.writeDatabase(value);
+		}
 		//Statement to get the database number out of the database path
 		int i = Integer.parseInt(this.databaseFilePath.replaceAll("\\D", ""));
 		this.logFilePath = "log"+Integer.toString(i)+".txt";
 		writeLog(this.logFilePath);
-                if (!this.logExists()) {
-                        this.createLog();
-                }
-                this.writeLog("Jarred is a cunt");
-                this.writeLog("Jake is amazing");
-    	}
+		if (!this.logExists()) {
+			this.createLog();
+		}
+		this.writeLog("Jarred is a cunt");
+		this.writeLog("Jake is amazing");
+	}
 
-    	public final boolean databaseExists() {
-        	File f = new File(this.databaseFilePath);
+	public final boolean databaseExists() {
+		File f = new File(this.databaseFilePath);
 		writeLog(f.exists());
-        	return f.exists() && !f.isDirectory();
-    	}
+		return f.exists() && !f.isDirectory();
+	}
 
 	public final boolean logExists(){
-                File f = new File(this.logFilePath);
-                return f.exists() && !f.isDirectory();
+		File f = new File(this.logFilePath);
+		return f.exists() && !f.isDirectory();
 	}
 
 	public final int queryDatabase() throws IOException {
-        	int value=0;
-        	Path path = Paths.get(this.databaseFilePath, new String[0]);
-        	BufferedReader reader = Files.newBufferedReader(path);
-        	Throwable throwable = null;
-        	try {
-            		String line = reader.readLine();
-            		while (line != null) {
-                		String[] parts = line.split("=");
+		int value=0;
+		Path path = Paths.get(this.databaseFilePath, new String[0]);
+		BufferedReader reader = Files.newBufferedReader(path);
+		Throwable throwable = null;
+		try {
+			String line = reader.readLine();
+			while (line != null) {
+				String[] parts = line.split("=");
 				value=Integer.parseInt(parts[1].replaceAll("\\s", ""));
-                		line = reader.readLine();
-            		}
-        	} catch (Throwable line) {
-            		throwable = line;
-            		throw line;
-        	} finally {
-            		if (reader != null) {
-                		if (throwable != null) {
-                    			try {
-                        			reader.close();
-                    			} catch (Throwable line) {
-                        			throwable.addSuppressed(line);
-                    			}
-                		} else {
-                    			reader.close();
-                		}
-            		}
-        	}
-        	writeLog("<server> <query database response = " + (Object)value + ">\n");
-        	return value;
-    	}
+				line = reader.readLine();
+			}
+		} catch (Throwable line) {
+			throwable = line;
+			throw line;
+		} finally {
+			if (reader != null) {
+				if (throwable != null) {
+					try {
+						reader.close();
+					} catch (Throwable line) {
+						throwable.addSuppressed(line);
+					}
+				} else {
+					reader.close();
+				}
+			}
+		}
+		writeLog("<server> <query database response = " + (Object)value + ">\n");
+		return value;
+	}
 
 	public final void writeLog(String logMessage) throws IOException {
 		Writer output = new BufferedWriter(new FileWriter(this.logFilePath, true));
@@ -115,74 +115,74 @@ public class Server {
 		output.close();
 	}
 
-        public final void createLog() throws IOException {
-                Path path = Paths.get(this.logFilePath, new String[0]);
-                BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
-                Throwable throwable = null;
-                try {
-                        writer.append("This is the log file server/database " + Integer.toString(Integer.parseInt(this.databaseFilePath.replaceAll("\\D", ""))));
-                        writer.flush();
-                } catch (Throwable var5_7) {
-                        System.out.println("Log write error");
-                        throwable = var5_7;
-                        throw var5_7;
-                } finally {
-                        if (writer != null) {
-                                if (throwable != null) {
-                                        try {
-                                                writer.close();
-                                        } catch (Throwable var5_6) {
-                                                throwable.addSuppressed(var5_6);
-                                        }
-                                } else {
-                                        writer.close();
-                                }
-                        }
-                }
-        }
+	public final void createLog() throws IOException {
+		Path path = Paths.get(this.logFilePath, new String[0]);
+		BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
+		Throwable throwable = null;
+		try {
+			writer.append("This is the log file server/database " + Integer.toString(Integer.parseInt(this.databaseFilePath.replaceAll("\\D", ""))));
+			writer.flush();
+		} catch (Throwable var5_7) {
+			System.out.println("Log write error");
+			throwable = var5_7;
+			throw var5_7;
+		} finally {
+			if (writer != null) {
+				if (throwable != null) {
+					try {
+						writer.close();
+					} catch (Throwable var5_6) {
+						throwable.addSuppressed(var5_6);
+					}
+				} else {
+					writer.close();
+				}
+			}
+		}
+	}
 
 	public final void writeDatabase(int value) throws IOException {
-        	Path path = Paths.get(this.databaseFilePath, new String[0]);
-        	BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
-        	Throwable throwable = null;
-        	try {
+		Path path = Paths.get(this.databaseFilePath, new String[0]);
+		BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
+		Throwable throwable = null;
+		try {
 			writeLog("attempting to write " + value);
-            		writer.write(Integer.toString(value));
-            		writer.flush();
-        	} catch (Throwable var5_7) {
+			writer.write(Integer.toString(value));
+			writer.flush();
+		} catch (Throwable var5_7) {
 			writeLog("Database write error");
-            		throwable = var5_7;
-            		throw var5_7;
-        	} finally {
-            		if (writer != null) {
-                		if (throwable != null) {
-                    			try {
-                        			writer.close();
-                    			} catch (Throwable var5_6) {
-                        			throwable.addSuppressed(var5_6);
-                    			}
-                		} else {
-                    			writer.close();
-                		}
-            		}
-        	}
-    	}
+			throwable = var5_7;
+			throw var5_7;
+		} finally {
+			if (writer != null) {
+				if (throwable != null) {
+					try {
+						writer.close();
+					} catch (Throwable var5_6) {
+						throwable.addSuppressed(var5_6);
+					}
+				} else {
+					writer.close();
+				}
+			}
+		}
+	}
 
-    	public static InetSocketAddress[] parseAddresses(String input) {
-        	if (input.equals("NULL")) {
-            		return new InetSocketAddress[0];
-        	}
-        	String[] rawAddresses = input.split(",");
-        	InetSocketAddress[] addresses = new InetSocketAddress[rawAddresses.length];
-        	for (int i = 0; i != rawAddresses.length; ++i) {
-            		String[] addrParts = rawAddresses[i].split(":");
-            		addresses[i] = new InetSocketAddress(addrParts[0], Integer.parseInt(addrParts[1]));
-        	}
-        	return addresses;
-    	}
+	public static InetSocketAddress[] parseAddresses(String input) {
+		if (input.equals("NULL")) {
+			return new InetSocketAddress[0];
+		}
+		String[] rawAddresses = input.split(",");
+		InetSocketAddress[] addresses = new InetSocketAddress[rawAddresses.length];
+		for (int i = 0; i != rawAddresses.length; ++i) {
+			String[] addrParts = rawAddresses[i].split(":");
+			addresses[i] = new InetSocketAddress(addrParts[0], Integer.parseInt(addrParts[1]));
+		}
+		return addresses;
+	}
 
 	public final void acceptClients(int port) throws IOException {
-	        clientSocket = new ServerSocket(port);
+		clientSocket = new ServerSocket(port);
 		//finish this
 	}
 
@@ -207,8 +207,8 @@ public class Server {
 			if (i<serverNumber) {
 				connections[i] = new Connection(this.serverSocket.accept());
 			} else {
-			        int port = servers[0].getPort();
-			        InetAddress address = servers[0].getAddress();
+				int port = servers[0].getPort();
+				InetAddress address = servers[0].getAddress();
 				connections[i] = new Connection(new Socket(address, port));
 			}
 
@@ -221,23 +221,23 @@ public class Server {
 	}
 
 	public void close() throws IOException {
-        	writeLog("<server> <closing>\n");
-        	if (this.clientSocket != null) {
-            		this.clientSocket.close();
-        	}
-        	if (this.clientListenerThread != null) {
-            		try {
-                		this.clientListenerThread.interrupt();
-                		this.clientListenerThread.join(1000);
-            		} catch (InterruptedException e) {
-                		System.err.println(e);
-                		e.printStackTrace(System.err);
-            		}
-        	}
-		if (serverSocket != null){
-            		serverSocket.close();
+		writeLog("<server> <closing>\n");
+		if (this.clientSocket != null) {
+			this.clientSocket.close();
 		}
-    	}
+		if (this.clientListenerThread != null) {
+			try {
+				this.clientListenerThread.interrupt();
+				this.clientListenerThread.join(1000);
+			} catch (InterruptedException e) {
+				System.err.println(e);
+				e.printStackTrace(System.err);
+			}
+		}
+		if (serverSocket != null){
+			serverSocket.close();
+		}
+	}
 
 	public boolean handleClientRequest(int value) throws IOException {
 		return true;
@@ -254,11 +254,11 @@ class Connection{
 	public Connection(Socket socket){
 		this.socket = socket;
 		outputStream = new ObjectOutputStream();
-                inputStream = new ObjectInputStream();
+		inputStream = new ObjectInputStream();
 	}
 
 	public void sendMessage(){
-	
+
 	}
 
 	public Message recieveMessage(){
