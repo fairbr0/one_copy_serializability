@@ -1,42 +1,27 @@
-//package cs347;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.Writer;
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketException;
 import java.net.ConnectException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.io.Serializable;
 
 public class Server {
 
@@ -245,63 +230,5 @@ public class Server {
 				e.printStackTrace();
 			}
 		}
-
 	}
-
-}
-
-class Connection implements Callable<Message> {
-	private Socket socket;
-	private ObjectOutputStream os;
-	private ObjectInputStream is;
-	private Message outgoingMessage;
-
-	public Connection(Socket socket) throws IOException {
-		this.socket = socket;
-		this.os = new ObjectOutputStream(socket.getOutputStream());
-		this.is = new ObjectInputStream(socket.getInputStream());
-		this.outgoingMessage = null;
-	}
-
-	public Message call() {
-		Message incoming = null;
-		try {
-			System.err.println("writing object " + this.outgoingMessage.toString());
-			os.writeObject(this.outgoingMessage);
-			os.flush();
-			System.err.println("Written, flushed");
-			socket.setSoTimeout(5000);
-			System.err.println("Have set so timeout, now reading");
-			incoming = (Message)is.readObject();
-			System.err.println("Successfully read " + incoming.toString());
-			socket.setSoTimeout(0);
-			return incoming;
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		return incoming;
-	}
-
-	public void setMessage(Message m) {
-		this.outgoingMessage = m;
-	}
-}
-
-class Message<T> implements Serializable {
-	private T message;
-
-	public Message(T message) {
-		this.message = message;
-	}
-
-	public T getMessage() {
-		return message;
-	}
-
-	public String toString() {
-		return message.toString();
-	}
-
 }

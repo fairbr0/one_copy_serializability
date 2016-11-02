@@ -1,25 +1,5 @@
-//package cs347;
-
 import java.io.IOException;
-import java.net.ConnectException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.TimeUnit;
-
 public class Node {
 
 	public static void help() {
@@ -67,7 +47,6 @@ public class Node {
 			System.out.println("<LOG Coordinator> Accepting servers on " + serverListenPort);
 			server.acceptClients(clientListenPort);
 			server.connectServers(otherServerAddresses);
-
 			server.testSend("");
 
 
