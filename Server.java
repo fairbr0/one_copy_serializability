@@ -13,10 +13,12 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.ConnectException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,9 +28,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.io.Serializable;
 
 public class Server {
 
@@ -38,45 +46,39 @@ public class Server {
 	private ServerSocket serverSocket;
 	private Thread clientListenerThread;
 	private Connection[] connections;
-
-
-	private static int defaultValue() {
-		return 0;
-	}
+	private ExecutorService threadpool;
+	private CompletionService<Message> completionService;
 
 	public Server(String databaseFilePath) throws IOException {
-		this(databaseFilePath, Server.defaultValue());
+		this(databaseFilePath, 0);
 	}
 
 	public Server(String databaseFilePath, int value) throws IOException {
 		this.databaseFilePath = databaseFilePath;
-		if (!this.databaseExists()) {
-			this.writeDatabase(value);
-		}
-		//Statement to get the database number out of the database path
 		int i = Integer.parseInt(this.databaseFilePath.replaceAll("\\D", ""));
 		this.logFilePath = "log"+Integer.toString(i)+".txt";
-		writeLog(this.logFilePath);
 		if (!this.logExists()) {
 			this.createLog();
 		}
-		this.writeLog("Jarred is a cunt");
-		this.writeLog("Jake is amazing");
+		if (!this.databaseExists()) {
+			this.writeDatabase(value);
+		}
+		this.threadpool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		this.completionService = new ExecutorCompletionService<Message>(this.threadpool);
 	}
 
 	public final boolean databaseExists() {
 		File f = new File(this.databaseFilePath);
-		writeLog(f.exists());
 		return f.exists() && !f.isDirectory();
 	}
 
-	public final boolean logExists(){
+	public final boolean logExists() {
 		File f = new File(this.logFilePath);
 		return f.exists() && !f.isDirectory();
 	}
 
 	public final int queryDatabase() throws IOException {
-		int value=0;
+		int value = 0;
 		Path path = Paths.get(this.databaseFilePath, new String[0]);
 		BufferedReader reader = Files.newBufferedReader(path);
 		Throwable throwable = null;
@@ -107,65 +109,34 @@ public class Server {
 		return value;
 	}
 
-	public final void writeLog(String logMessage) throws IOException {
-		Writer output = new BufferedWriter(new FileWriter(this.logFilePath, true));
-		output.append("\r\n");
-		output.append(logMessage);
-		System.out.print(logMessage);
-		output.close();
+	public final void writeLog(String logMessage) {
+		if (logExists()) {
+			try {
+				Writer output = new BufferedWriter(new FileWriter(this.logFilePath, true));
+				output.append("\r\n");
+				output.append(logMessage);
+				System.out.println(logMessage);
+				output.close();
+			} catch (IOException e) {
+				System.err.println("Error: IOException in writeLog");
+				e.printStackTrace();
+			}
+		} else {
+			System.err.println("Log does not exist, not creating yet");
+			System.err.println(logMessage);
+		}
 	}
 
 	public final void createLog() throws IOException {
-		Path path = Paths.get(this.logFilePath, new String[0]);
-		BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
-		Throwable throwable = null;
-		try {
-			writer.append("This is the log file server/database " + Integer.toString(Integer.parseInt(this.databaseFilePath.replaceAll("\\D", ""))));
-			writer.flush();
-		} catch (Throwable var5_7) {
-			System.out.println("Log write error");
-			throwable = var5_7;
-			throw var5_7;
-		} finally {
-			if (writer != null) {
-				if (throwable != null) {
-					try {
-						writer.close();
-					} catch (Throwable var5_6) {
-						throwable.addSuppressed(var5_6);
-					}
-				} else {
-					writer.close();
-				}
-			}
-		}
+		File f = new File(logFilePath);
+		f.createNewFile();
 	}
 
 	public final void writeDatabase(int value) throws IOException {
-		Path path = Paths.get(this.databaseFilePath, new String[0]);
-		BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
-		Throwable throwable = null;
-		try {
-			writeLog("attempting to write " + value);
-			writer.write(Integer.toString(value));
-			writer.flush();
-		} catch (Throwable var5_7) {
-			writeLog("Database write error");
-			throwable = var5_7;
-			throw var5_7;
-		} finally {
-			if (writer != null) {
-				if (throwable != null) {
-					try {
-						writer.close();
-					} catch (Throwable var5_6) {
-						throwable.addSuppressed(var5_6);
-					}
-				} else {
-					writer.close();
-				}
-			}
-		}
+		FileWriter f = new FileWriter(databaseFilePath, false);
+		f.write(value);
+		System.err.println("Wrote to database file");
+		f.close();
 	}
 
 	public static InetSocketAddress[] parseAddresses(String input) {
@@ -196,7 +167,7 @@ public class Server {
 	}
 
 	public void connectServers(InetSocketAddress[] servers) throws IOException {
-		writeLog("<LOG> Connecting to all slave servers");
+		writeLog("<server> Connecting to all other servers");
 
 		connections = new Connection[servers.length];
 
@@ -204,20 +175,33 @@ public class Server {
 
 		for (int i = 0; i < connections.length; i++) {
 			//Create a socket for each connection necessary
-			if (i<serverNumber) {
+			if (i < serverNumber) {
+				//listen
 				connections[i] = new Connection(this.serverSocket.accept());
+				connections[i].setMessage(new Message<String>("yolo$wag " + i));
 			} else {
 				int port = servers[0].getPort();
 				InetAddress address = servers[0].getAddress();
-				connections[i] = new Connection(new Socket(address, port));
-			}
 
-			//QUESTIONS?!?!?!??!?!?!?!?!?!?!
-			sockets[i].accept();
-			sockets[i].connect(servers[i]);
-			writeLog("<server> socket created for server " + i);
+				boolean connected = false;
+				int count = 0;
+				while (count < 10 && !connected) {
+					try {
+						connections[i] = new Connection(new Socket(address, port));
+						connections[i].setMessage(new Message<String>("lolololololllllol " + i));
+						connected = true;
+					} catch (ConnectException e) {
+						System.err.println("Connection refused");
+						count += 1;
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e2) {
+							e2.printStackTrace();
+						}
+					}
+				}
+ 			}
 		}
-
 	}
 
 	public void close() throws IOException {
@@ -234,7 +218,7 @@ public class Server {
 				e.printStackTrace(System.err);
 			}
 		}
-		if (serverSocket != null){
+		if (serverSocket != null) {
 			serverSocket.close();
 		}
 	}
@@ -243,38 +227,81 @@ public class Server {
 		return true;
 	}
 
+	public void testSend(String s) {
+		for (Connection c : connections) {
+			completionService.submit(c);
+		}
+		System.err.println("Submitted to completion service; taking");
+		for (Connection c : connections) {
+			try {
+				Future<Message> f = completionService.take();
+				Message m = f.get(10, TimeUnit.SECONDS);
+				writeLog("Found message " + m.toString());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			} catch (TimeoutException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
 }
 
-class Connection{
-
+class Connection implements Callable<Message> {
 	private Socket socket;
-	private ObjectOutputStream outputStream;
-	private ObjectInputStream inputStream;
+	private ObjectOutputStream os;
+	private ObjectInputStream is;
+	private Message outgoingMessage;
 
-	public Connection(Socket socket){
+	public Connection(Socket socket) throws IOException {
 		this.socket = socket;
-		outputStream = new ObjectOutputStream();
-		inputStream = new ObjectInputStream();
+		this.os = new ObjectOutputStream(socket.getOutputStream());
+		this.is = new ObjectInputStream(socket.getInputStream());
+		this.outgoingMessage = null;
 	}
 
-	public void sendMessage(){
-
+	public Message call() {
+		Message incoming = null;
+		try {
+			System.err.println("writing object " + this.outgoingMessage.toString());
+			os.writeObject(this.outgoingMessage);
+			os.flush();
+			System.err.println("Written, flushed");
+			socket.setSoTimeout(5000);
+			System.err.println("Have set so timeout, now reading");
+			incoming = (Message)is.readObject();
+			System.err.println("Successfully read " + incoming.toString());
+			socket.setSoTimeout(0);
+			return incoming;
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		return incoming;
 	}
 
-	public Message recieveMessage(){
-
+	public void setMessage(Message m) {
+		this.outgoingMessage = m;
 	}
 }
 
-class Message {
-	private String message;
+class Message<T> implements Serializable {
+	private T message;
 
-	public Message(String message) {
+	public Message(T message) {
 		this.message = message;
 	}
 
-	public String getMessage(){
+	public T getMessage() {
 		return message;
+	}
+
+	public String toString() {
+		return message.toString();
 	}
 
 }
