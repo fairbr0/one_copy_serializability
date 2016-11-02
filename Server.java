@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 //package cs347;
 
 import java.io.BufferedReader;
@@ -57,7 +56,7 @@ public class Server {
 		//Statement to get the database number out of the database path
 		int i = Integer.parseInt(this.databaseFilePath.replaceAll("\\D", ""));
 		this.logFilePath = "log"+Integer.toString(i)+".txt";
-		System.out.print(this.logFilePath);
+		writeLog(this.logFilePath);
                 if (!this.logExists()) {
                         this.createLog();
                 }
@@ -67,7 +66,7 @@ public class Server {
 
     	public final boolean databaseExists() {
         	File f = new File(this.databaseFilePath);
-		System.out.println(f.exists());
+		writeLog(f.exists());
         	return f.exists() && !f.isDirectory();
     	}
 
@@ -104,7 +103,7 @@ public class Server {
                 		}
             		}
         	}
-        	System.out.print("<server> <query database response = " + (Object)value + ">\n");
+        	writeLog("<server> <query database response = " + (Object)value + ">\n");
         	return value;
     	}
 
@@ -112,6 +111,7 @@ public class Server {
 		Writer output = new BufferedWriter(new FileWriter(this.logFilePath, true));
 		output.append("\r\n");
 		output.append(logMessage);
+		System.out.print(logMessage);
 		output.close();
 	}
 
@@ -146,11 +146,11 @@ public class Server {
         	BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
         	Throwable throwable = null;
         	try {
-			System.out.println("attempting to write " + value);
+			writeLog("attempting to write " + value);
             		writer.write(Integer.toString(value));
             		writer.flush();
         	} catch (Throwable var5_7) {
-			System.out.println("Database write error");
+			writeLog("Database write error");
             		throwable = var5_7;
             		throw var5_7;
         	} finally {
@@ -192,11 +192,11 @@ public class Server {
 
 	public void acceptServers(int port) throws IOException {
 		serverSocket = new ServerSocket(port);
-		System.out.println("<server> Now accepting clients");
+		writeLog("<server> Now accepting clients");
 	}
 
 	public void connectServers(InetSocketAddress[] servers) throws IOException {
-		System.out.println("<LOG> Connecting to all slave servers");
+		writeLog("<LOG> Connecting to all slave servers");
 
 		connections = new Connection[servers.length];
 
@@ -215,13 +215,13 @@ public class Server {
 			//QUESTIONS?!?!?!??!?!?!?!?!?!?!
 			sockets[i].accept();
 			sockets[i].connect(servers[i]);
-			System.out.println("<server> socket created for server " + i);
+			writeLog("<server> socket created for server " + i);
 		}
 
 	}
 
 	public void close() throws IOException {
-        	System.out.print("<server> <closing>\n");
+        	writeLog("<server> <closing>\n");
         	if (this.clientSocket != null) {
             		this.clientSocket.close();
         	}
@@ -277,5 +277,4 @@ class Message {
 		return message;
 	}
 
->>>>>>> 70db11ce9b88c15cc212d7e9bfa1281bfed1a9e5
 }
