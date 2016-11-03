@@ -73,7 +73,7 @@ public class Server {
 			String line = reader.readLine();
 			while (line != null) {
 				String[] parts = line.split("=");
-				value=Integer.parseInt(parts[1].replaceAll("\\s", ""));
+				value = Integer.parseInt(parts[1].replaceAll("\\s", ""));
 				line = reader.readLine();
 			}
 		} catch (Throwable line) {
@@ -96,14 +96,15 @@ public class Server {
 		return value;
 	}
 
-	public final void writeLog(String logMessage) {
+	public final void writeLog(String message) {
 		if (logExists()) {
 			try (
 				Writer fw = new FileWriter(logFilePath, true);
 				Writer bw = new BufferedWriter(fw);
-				PrintWriter out = new PrintWriter(bw)
+				PrintWriter log = new PrintWriter(bw)
 			) {
-				out.println(logMessage);
+				log.println(message);
+				System.out.println(message);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -163,17 +164,17 @@ public class Server {
 			if (i < serverNumber) {
 				//listen
 				connections[i] = new Connection(this.serverSocket.accept());
-				connections[i].setMessage(new Message<Integer>(0));
+				connections[i].setMessage(new Message<Integer>(serverNumber));
 			} else {
-				int port = servers[0].getPort();
-				InetAddress address = servers[0].getAddress();
+				int port = servers[i].getPort();
+				InetAddress address = servers[i].getAddress();
 
 				boolean connected = false;
 				int count = 0;
 				while (count < 10 && !connected) {
 					try {
 						connections[i] = new Connection(new Socket(address, port));
-						connections[i].setMessage(new Message<Integer>(1));
+						connections[i].setMessage(new Message<Integer>(serverNumber));
 						connected = true;
 					} catch (ConnectException e) {
 						System.err.println("Connection refused");
@@ -219,9 +220,12 @@ public class Server {
 		System.err.println("Submitted to completion service; taking");
 		for (Connection c : connections) {
 			try {
+				System.err.println("About to take ");
 				Future<Message> f = completionService.take();
+				System.err.println("Took!");
 				Message m = f.get(10, TimeUnit.SECONDS);
-				writeLog("Found message " + m.toString());
+				System.err.println("Got " + m.toString());
+
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {

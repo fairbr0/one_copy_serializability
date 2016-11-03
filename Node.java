@@ -56,6 +56,7 @@ public class Node {
 		} finally {
 			System.out.println("System Closed");
 			server.close();
+			System.exit(0);
 		}
 	}
 }

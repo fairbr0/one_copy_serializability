@@ -25,22 +25,18 @@ public class Connection implements Callable<Message> {
 	public Message call() {
 		Message incoming = null;
 		try {
-			System.err.println("writing object GFGFGGFGFGFG " + this.outgoingMessage.toString());
+			System.err.println("writing {" + this.outgoingMessage.toString() + "}");
 			os.writeObject(this.outgoingMessage);
 			os.flush();
-			System.err.println("Written, flushed");
 			socket.setSoTimeout(5000);
-			System.err.println("Have set so timeout, now reading");
-
-			System.err.println("I'm sleeping");
-			System.err.println(outgoingMessage.getMessage());
-			if (this.outgoingMessage.getMessage() == 0) {
-				try { Thread.sleep(4000); } catch (Exception e) { e.printStackTrace(); }
-			} else {
-				System.err.println("no sleep coz my msg is " + outgoingMessage.toString());
+			try {
+				int time = (Integer)this.outgoingMessage.getMessage() * 4000;
+				System.err.println("Sleeping for " + time + " ms");
+				Thread.sleep(time);
+				System.err.println("Awake");
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-			System.err.println("Awake");
-
 			incoming = (Message)is.readObject();
 			System.err.println("Successfully read " + incoming.toString());
 			socket.setSoTimeout(0);
