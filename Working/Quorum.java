@@ -100,6 +100,9 @@ public class Quorum {
 				if (clientMessage != null) {
 					server.log("<quorum> message recieved from a client " + clientMessage.toString());
 					processClientMessage(clientMessage);
+					if(){
+						
+					}
 				}
 
 				server.testSend();
