@@ -60,13 +60,13 @@ public class Logger {
 				Writer bw = new BufferedWriter(fw);
 				PrintWriter log = new PrintWriter(bw)
 			) {
-				log.println(message);
+				log.println("<server " +serverNumber+ "> " + message);
 				//System.out.println(message);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		} else {
-			System.err.println("Tried to write log but log file does not exist");
+			System.err.println("<server " +serverNumber+ "> Tried to write log but log file does not exist");
 		}
 	}
 
@@ -109,7 +109,7 @@ public class Logger {
 				}
 			}
 		}
-		writeLog("<server> <query database response = " + (Object)value + ">\n");
+		writeLog("Query database response = " + (Object)value + ">\n");
 		return value;
 	}
 
