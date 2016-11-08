@@ -1,0 +1,6 @@
+//This file specifies a single transaction
+
+server 1
+read x
+write x 10
+read x

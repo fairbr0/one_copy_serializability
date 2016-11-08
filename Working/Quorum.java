@@ -101,13 +101,13 @@ public class Quorum {
 					server.log("<quorum> message recieved from a client " + clientMessage.toString());
 					processClientMessage(clientMessage);
 					if(){
-						
+
 					}
 				}
 
-				server.testSend();
-				server.testSend();
-				Thread.sleep(4000);
+				//server.testSend();
+				//server.testSend();
+				Thread.sleep(1000);
 			}
 		} catch(Exception e){
 			e.printStackTrace();
@@ -116,6 +116,16 @@ public class Quorum {
 
 	public void processServerMessage(Message serverMessage){
 		String message = (String) serverMessage.getMessage();
+		if(message == "Read Request"){
+
+		} else if(message == "Write Request"){
+
+		} else if(message == "Write Acknoledge"){
+
+		} else {
+			//ABORT
+		}
+
 		System.out.println(serverMessage);
 	}
 
