@@ -11,6 +11,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.FileNotFoundException;
 import java.nio.file.StandardOpenOption;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class Logger {
 
@@ -28,6 +31,7 @@ public class Logger {
     if (!this.databaseExists()) {
       this.createDatabase();
     }
+
   }
 
   private final boolean logExists() {
@@ -60,7 +64,9 @@ public class Logger {
 				Writer bw = new BufferedWriter(fw);
 				PrintWriter log = new PrintWriter(bw)
 			) {
-				log.println("<server " +serverNumber+ "> " + message);
+				Date date = new Date();
+				SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss:SSS");
+				log.println("<timestamp " + sdf.format(date) + "> <server " +serverNumber+ "> " + message);
 				//System.out.println(message);
 			} catch (IOException e) {
 				e.printStackTrace();

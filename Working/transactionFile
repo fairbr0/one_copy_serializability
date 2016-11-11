@@ -1,6 +1,3 @@
 //This file specifies a single transaction
 
-server 1
-read x
-write x 10
-read x
+client 1; server 1; begin T1; read x; write x; commit T1;

@@ -11,21 +11,6 @@ public class Quorum {
 	private Server server;
 	private boolean isClosing = false;
 
-	public static void help() {
-		System.out.println("Usage:");
-		System.out.println("\tjava Node server <server port> <client port> <other servers> <database path>");
-		System.out.println("\t\t<server port>: The port that the server listens on for other servers");
-		System.out.println("\t\t<client port>: The port that the server listens on for clients");
-		System.out.println("\t\t<other servers>: A comma separated list of the other server's addresses and ports");
-		System.out.println("\t\t\tExamples:");
-		System.out.println("\t\t\t - 'localhost:9001'");
-		System.out.println("\t\t\t - 'localhost:9001,127.0.0.1:9002'");
-		System.out.println("\t\t<database path>: The path to the database file, this needs to be unique per server");
-		System.out.println("\t\t\tExamples:");
-		System.out.println("\t\t\t - 'db1.txt'");
-		System.exit(1);
-	}
-
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		if (args.length < 1) {
 			help();
@@ -100,9 +85,7 @@ public class Quorum {
 				if (clientMessage != null) {
 					server.log("<quorum> message recieved from a client " + clientMessage.toString());
 					processClientMessage(clientMessage);
-					if(){
 
-					}
 				}
 
 				//server.testSend();
@@ -116,10 +99,11 @@ public class Quorum {
 
 	public void processServerMessage(Message serverMessage){
 		String message = (String) serverMessage.getMessage();
+		String[] messageParts = message.split(" ");
 		if(message == "Read Request"){
-
+			//The server must have which server it is in the message to send a response back to
 		} else if(message == "Write Request"){
-
+			//The server must have which server it is in the message to send a response back to
 		} else if(message == "Write Acknoledge"){
 
 		} else {
@@ -134,4 +118,19 @@ public class Quorum {
 		System.out.println(clientMessage);
 	}
 
+
+	public static void help() {
+		System.out.println("Usage:");
+		System.out.println("\tjava Node server <server port> <client port> <other servers> <database path>");
+		System.out.println("\t\t<server port>: The port that the server listens on for other servers");
+		System.out.println("\t\t<client port>: The port that the server listens on for clients");
+		System.out.println("\t\t<other servers>: A comma separated list of the other server's addresses and ports");
+		System.out.println("\t\t\tExamples:");
+		System.out.println("\t\t\t - 'localhost:9001'");
+		System.out.println("\t\t\t - 'localhost:9001,127.0.0.1:9002'");
+		System.out.println("\t\t<database path>: The path to the database file, this needs to be unique per server");
+		System.out.println("\t\t\tExamples:");
+		System.out.println("\t\t\t - 'db1.txt'");
+		System.exit(1);
+	}
 }
