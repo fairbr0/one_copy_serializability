@@ -36,7 +36,7 @@ public class Logger {
 	    }
 		} else {
 			this.serverNumber=Integer.parseInt(path);
-			this.serverNumber = this.serverNumber-9000;
+			this.serverNumber = this.serverNumber;
 			this.type = type;
 			this.logFilePath = type + "Log"+ Integer.toString(this.serverNumber) +".txt";
 			if (!this.logExists()) {

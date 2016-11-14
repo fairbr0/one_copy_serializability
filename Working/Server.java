@@ -109,7 +109,8 @@ class Server {
     Thread listenThread = new Thread(() -> {
       try {
         do {
-          ObjectInputStream is = new ObjectInputStream(socket.getInputStream());
+					InputStream s = socket.getInputStream();
+          ObjectInputStream is = new ObjectInputStream(s);
           log("listening for client messages");
           Object sent = is.readObject();
           handleClientRequest((Message) sent);

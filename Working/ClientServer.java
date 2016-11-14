@@ -10,6 +10,7 @@ public class ClientServer{
   private LinkedList<String> transactions;
 	private Thread serverConnectionThread;
 	private Logger logger;
+	private Boolean flag;
 
 	public ClientServer(String loggerFilePath) throws IOException {
 		//Do we need a logger for the client server?
@@ -22,6 +23,9 @@ public class ClientServer{
 			ClientServer cs = new ClientServer(args[0]);
 	    cs.readTransactionFile(args[0]);
 	    cs.processTransactions(args[1]);
+			while (true) {
+
+			}
 		} catch(Exception e){
 			e.printStackTrace();
 		}
@@ -40,39 +44,58 @@ public class ClientServer{
 				int portNumber = Integer.parseInt(commands[1].replace(";", ""));
 				System.out.println("1st port number " + portNumber);
 				System.out.println("Connecting to port");
-				connectServer(serverInformation[portNumber-1], portNumber+9030);
+				connectServer(serverInformation[portNumber-1], portNumber+9000);
 				sendTransaction(transactions);
+				flag=false;
 				System.out.println(transactions);
 				System.out.println("Transaction COMPLETE");
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
   }
 
 	private void sendTransaction(String transaction) {
-		try {
-			ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
-			Message send = new Message<String>(transaction);
-			os.writeObject(send);
-			os.flush();
-			System.out.println("Transaction sent to the server for processing");
-		} catch(IOException e){
-			e.printStackTrace();
+		while (flag) {
+			try {
+				if (this.socket == null) {
+					System.out.println("Why the fuck is the socket null");
+				}
+
+				ObjectOutputStream os = new ObjectOutputStream(this.socket.getOutputStream());
+				Message send = new Message<String>(transaction);
+				//Message send = new Message<String>("Jarred is a cunt");
+				os.writeObject(send);
+				os.flush();
+				flag=false;
+				System.out.println("Transaction sent to the server for processing");
+			} catch(IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
-	public void connectServer(InetSocketAddress server, int portNumber) throws IOException {
+	public void connectServer(InetSocketAddress server, int portNumber) throws IOException, InterruptedException {
 			InetAddress address = server.getAddress();
 			System.out.println("Port Number " + portNumber);
 			System.out.println("Making a connection on the port");
       int count = 0;
       while (count < 10) {
+				System.out.println("Before the try catch block");
         try {
           this.socket = new Socket(address, portNumber);
+					System.out.println("connection made");
+					break;
         } catch (Exception e) {
+					System.out.println(count);
           count += 1;
-        }
+					Thread.sleep(1000);
+        } finally {
+					System.out.println("Finally");
+					flag=true;
+				}
       }
 	}
 
@@ -91,7 +114,6 @@ public class ClientServer{
 
   private void readTransactionFile(String serverNumber) throws FileNotFoundException, IOException {
 		int fileNumber = Integer.parseInt(serverNumber);
-		fileNumber-=9000;
 		System.out.println(fileNumber);
 		String fileName = "trans" + fileNumber + ".txt";
 		System.out.println("The location for this server is: " + fileName);

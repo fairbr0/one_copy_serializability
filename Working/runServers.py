@@ -19,5 +19,5 @@ for i in range(0, n):
     if i != n-1:
         s += address + str(n-1)
     s += " " + str(i) + " &"
-    print(s)
-    #call(s, shell=True)
+    #print(s)
+    call(s, shell=True)
