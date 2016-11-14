@@ -23,8 +23,6 @@ public class Quorum {
 		}
 	}
 
-
-
 	private void serverMain(String[] args) throws IOException, ClassNotFoundException {
 		if (args.length != 5) {
 			help();
@@ -98,6 +96,7 @@ public class Quorum {
 	}
 
 	public void processServerMessage(Message serverMessage){
+		System.out.println("We have got a message from a client!!! Woop Woop - This shit works");
 		String message = (String) serverMessage.getMessage();
 		String[] messageParts = message.split(" ");
 		if(message == "Read Request"){

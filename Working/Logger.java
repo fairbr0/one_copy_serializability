@@ -19,19 +19,31 @@ public class Logger {
 
 	private String logFilePath;
   private String databaseFilePath;
+	private String type;
 	private int serverNumber;
 
-  public Logger(String path) throws IOException{
-		this.serverNumber=Integer.parseInt(path);
-    this.logFilePath = "log"+path+".txt";
-    if (!this.logExists()) {
-      this.createLog();
-    }
-    this.databaseFilePath = "db"+path+".txt";
-    if (!this.databaseExists()) {
-      this.createDatabase();
-    }
-
+  public Logger(String path, String type) throws IOException{
+		if(type == "Server"){
+			this.serverNumber=Integer.parseInt(path);
+			this.type = type;
+	    this.logFilePath = type + "Log"+path+".txt";
+	    if (!this.logExists()) {
+	      this.createLog();
+	    }
+	    this.databaseFilePath = type + "Db"+path+".txt";
+	    if (!this.databaseExists()) {
+	      this.createDatabase();
+	    }
+		} else {
+			this.serverNumber=Integer.parseInt(path);
+			this.serverNumber = this.serverNumber-9000;
+			this.type = type;
+			this.logFilePath = type + "Log"+ Integer.toString(this.serverNumber) +".txt";
+			if (!this.logExists()) {
+				System.out.println(this.logFilePath);
+				this.createLog();
+			}
+		}
   }
 
   private final boolean logExists() {
@@ -42,7 +54,7 @@ public class Logger {
   private final void createLog() throws IOException {
     File f = new File(logFilePath);
     f.createNewFile();
-		writeLog("This is the log file for server " + serverNumber);
+		writeLog("This is the log file for " + type + " "+ serverNumber);
   }
 
   public final void writeDatabase(String message) throws  IOException {
@@ -66,13 +78,15 @@ public class Logger {
 			) {
 				Date date = new Date();
 				SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss:SSS");
-				log.println("<timestamp " + sdf.format(date) + "> <server " +serverNumber+ "> " + message);
+				log.println("<timestamp " + sdf.format(date) + "> <"  + type + " " +serverNumber+ "> " + message);
 				//System.out.println(message);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		} else {
-			System.err.println("<server " +serverNumber+ "> Tried to write log but log file does not exist");
+			Date date = new Date();
+			SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss:SSS");
+			System.err.println("<timestamp " + sdf.format(date) + "> <"  + type + " " +serverNumber+ ">  Tried to write log but log file does not exist");
 		}
 	}
 

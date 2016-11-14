@@ -3,7 +3,7 @@ import java.io.IOException;
 public class LoggerTester {
 
 	public static void main (String args[]) throws IOException {
-		Logger logger = new Logger("0");
+		Logger logger = new Logger("0", "Server");
 		logger.writeLog("Jarred is a cunt");
 		logger.writeLog("Matt is an even bigger cunt");
 		logger.writeLog("Lets make CS246 great again");

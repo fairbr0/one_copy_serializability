@@ -17,7 +17,7 @@ class Server {
 	private LinkedList<Message> serverQueue;
 
 	public Server(String databaseFilePath) throws IOException {
-		this.logger = new Logger(databaseFilePath);
+		this.logger = new Logger(databaseFilePath, "Server"); //Here we want to document what type of server this is
 		this.isClosing = false;
 		this.logger.writeDatabase("10");
 		this.clientQueue = new LinkedList<Message>();
