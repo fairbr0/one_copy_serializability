@@ -40,7 +40,7 @@ public class ClientServer{
 				int portNumber = Integer.parseInt(commands[1].replace(";", ""));
 				System.out.println("1st port number " + portNumber);
 				System.out.println("Connecting to port");
-				connectServer(serverInformation[portNumber], portNumber+9030);
+				connectServer(serverInformation[portNumber-1], portNumber+9030);
 				sendTransaction(transactions);
 				System.out.println(transactions);
 				System.out.println("Transaction COMPLETE");
@@ -66,7 +66,14 @@ public class ClientServer{
 			InetAddress address = server.getAddress();
 			System.out.println("Port Number " + portNumber);
 			System.out.println("Making a connection on the port");
-			this.socket = new Socket(address, portNumber);
+      int count = 0;
+      while (count < 10) {
+        try {
+          this.socket = new Socket(address, portNumber);
+        } catch (Exception e) {
+          count += 1;
+        }
+      }
 	}
 
 	public static InetSocketAddress[] parseAddresses(String input) {
