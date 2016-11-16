@@ -1,11 +1,13 @@
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.lang.Math;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class Quorum {
 
-	private int x = 55;
-	private int y = 80;
+	private int read = 10;
+	private int write = 91;
 	private int numberOfVotes;
 	private int numberOfServers;
 	private Server server;
@@ -85,10 +87,7 @@ public class Quorum {
 					processClientMessage(clientMessage);
 
 				}
-
-				//server.testSend();
-				//server.testSend();
-				Thread.sleep(1000);
+				Thread.sleep(100);
 			}
 		} catch(Exception e){
 			e.printStackTrace();
@@ -96,14 +95,15 @@ public class Quorum {
 	}
 
 	public void processServerMessage(Message serverMessage){
-		System.out.println("We have got a message from a client!!! Woop Woop - This shit works");
+		//System.out.println("We have got a message from a client!!! Woop Woop - This shit works");
 		String message = (String) serverMessage.getMessage();
 		String[] messageParts = message.split(" ");
-		if(message == "Read Request"){
+		System.out.println("The message received is: " + message);
+		if(messageParts[0] == "Send votes") {
 			//The server must have which server it is in the message to send a response back to
-		} else if(message == "Write Request"){
+		} else if(messageParts[0] == "Return votes") {
 			//The server must have which server it is in the message to send a response back to
-		} else if(message == "Write Acknoledge"){
+		} else if(messageParts[0] == "Write Acknoledge") {
 
 		} else {
 			//ABORT
@@ -115,6 +115,56 @@ public class Quorum {
 	public void processClientMessage(Message clientMessage){
 		String message = (String) clientMessage.getMessage();
 		System.out.println(clientMessage);
+		//begin T1; read x; write x; commit T1;
+		String[] trans = message.split("; ");
+		String transactionNumber = trans[0].split(" ")[1];
+		System.out.println("The transaction Number is "+ transactionNumber);
+
+		//Processing the transactionNumber
+		LinkedList requests = new LinkedList();
+		if (((trans[0].split(" "))[0]).equals("begin")){
+			for(int i=1; i<trans.length; i++){
+				//System.out.println(trans[i]);
+				//System.out.println(trans[i].split(" ")[0]);
+				if (trans[i] == "" || trans[i] == " "){
+										continue;
+				} else if ((trans[i].split(" "))[0].equals("commit")) {
+					System.out.println("Commit");
+					System.out.println("The final thing should be commit maybe??" + trans[i]);
+				} else {
+					System.out.println("Send this process this command " + trans[i]);
+					requests.add(trans[i]);
+				}
+			}
+
+			int maxVotes = processRequestsList(requests);
+			System.out.println("The max number of votes needed for this transaction is " + maxVotes);
+			getVotes(maxVotes);
+		}
+	}
+
+	private void getVotes(int noVotesRequired) {
+		System.out.println("Getting votes from dem bitches");
+		server.transmitMessage("Send Votes");
+	}
+
+	private int processRequestsList(LinkedList<String> requests) {
+		int maxVotes = 0;
+		Iterator<String> it = requests.iterator();
+		System.out.println("Processing the list of requests");
+		while (it.hasNext()) {
+			String r = it.next();
+			String[] rsplit = r.split(" ");
+			if(rsplit[0].equals("read")){
+				maxVotes = java.lang.Math.max(maxVotes, this.read);
+				System.out.println("A read has been read");
+			} else if(rsplit[0].equals("write")){
+				maxVotes = java.lang.Math.max(maxVotes, this.write);
+				System.out.println("A write has been read");
+			}
+		}
+
+		return maxVotes;
 	}
 
 

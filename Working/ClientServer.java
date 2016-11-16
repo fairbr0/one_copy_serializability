@@ -63,9 +63,18 @@ public class ClientServer{
 				if (this.socket == null) {
 					System.out.println("Why the fuck is the socket null");
 				}
+				String[] parts = transaction.split("; ");
+				System.out.println("Part 1 =" + parts[0]);
+				System.out.println("Part 2 =" + parts[1]);
+
+				StringBuilder builder = new StringBuilder();
+				for(int i = 1; i < parts.length; i++) {
+    			builder.append(parts[i] + "; ");
+				}
+				String sendMessage =  builder.toString();
 
 				ObjectOutputStream os = new ObjectOutputStream(this.socket.getOutputStream());
-				Message send = new Message<String>(transaction);
+				Message send = new Message<String>(sendMessage);
 				//Message send = new Message<String>("Jarred is a cunt");
 				os.writeObject(send);
 				os.flush();

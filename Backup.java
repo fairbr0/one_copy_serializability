@@ -1,7 +1,5 @@
 import java.net.*;
 import java.io.*;
-import java.util.Queue;
-import java.util.LinkedList;
 
 class Server {
   //will only 1 client ever be connected? Yes Jake
@@ -13,15 +11,11 @@ class Server {
   private boolean isClosing;
   private Socket servers[];
 	private Logger logger;
-	private LinkedList<Message> clientQueue;
-	private LinkedList<Message> serverQueue;
 
 	public Server(String databaseFilePath) throws IOException {
-		this.logger = new Logger(databaseFilePath, "Server"); //Here we want to document what type of server this is
+		this.logger = new Logger(databaseFilePath);
 		this.isClosing = false;
 		this.logger.writeDatabase("10");
-		this.clientQueue = new LinkedList<Message>();
-		this.serverQueue = new LinkedList<Message>();
 	}
 
   public void acceptServers(int port) throws IOException {
@@ -30,12 +24,12 @@ class Server {
 
   public void acceptClients(int port) throws IOException {
     this.clientSocket = new ServerSocket(port);
-    log("Listening for client connections, client wankers");
+    log("<server> <listening for client connections>");
     this.clientListenerThread = new Thread(() -> {
       while (!this.isClosing()) {
         try {
           Socket socket = clientSocket.accept();
-          log("Client connected on socket " + socket.toString() + ">");
+          log("<server> <client connected on socket " + socket.toString() + ">");
           socket.setTcpNoDelay(true);
           socket.setSoTimeout(300000);
           this.listenClient(socket);
@@ -59,9 +53,9 @@ class Server {
       while (!this.isClosing()) {
         try {
           //add socket to array
-          log("Listening for server connections" + k);
+          log("<server> <listening for server connections>" + k);
           Socket socket = serverSocket.accept();
-          log("Server " + k + " connected");
+          log("<server> <server " + k + " connected>");
           socket.setTcpNoDelay(true);
           socket.setSoTimeout(300000);
           this.servers[k] = socket;
@@ -75,7 +69,7 @@ class Server {
     });
     this.serverListenerThread.start();
 
-    log("Trying to connect to servers ");
+    log("<server> <Trying to connect to servers >");
 		for (int i = serverNumber; i < servers.length; i++) {
 			int port = servers[i].getPort();
 			InetAddress address = servers[i].getAddress();
@@ -85,7 +79,7 @@ class Server {
 			while (count < 10 && !connected) {
         //add socket to array
 				try {
-          log("Trying to connect to server " + i);
+          log("<server> <Trying to connect to server " + i + ">");
 					this.servers[i] = new Socket(address, port);
           this.listenServer(i);
 					connected = true;
@@ -109,9 +103,8 @@ class Server {
     Thread listenThread = new Thread(() -> {
       try {
         do {
-					InputStream s = socket.getInputStream();
-          ObjectInputStream is = new ObjectInputStream(s);
-          log("listening for client messages");
+          ObjectInputStream is = new ObjectInputStream(socket.getInputStream());
+          log("<server> <listening for client messages>");
           Object sent = is.readObject();
           handleClientRequest((Message) sent);
         } while (!isClosing());
@@ -129,9 +122,9 @@ class Server {
         do {
           Socket s = servers[i];
           ObjectInputStream is = new ObjectInputStream(s.getInputStream());
-          log("Listening for server messages");
+          log("<server> <listening for server messages>");
           Message sent = (Message)is.readObject();
-          handleServerRequest(sent, i);
+          handleServerRequest((Message) sent, i);
         } while (!isClosing());
       } catch (Exception e) {
         e.printStackTrace();
@@ -140,12 +133,13 @@ class Server {
     listenThread.start();
   }
 
-  public void transmitMessage(String message) {
+  public void testSend() {
+
     try {
-      Thread.sleep(1000);
-      log("Sending message " + message + " to all servers");
+      Thread.sleep(4000);
+      log("sending test");
       for (int i = 0; i < servers.length; i++) {
-        requestToServer(message, i);
+        requestToServer("hello", i);
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -155,50 +149,30 @@ class Server {
   //Listens to the clients sockets for a message;
   public void handleClientRequest(Message message) throws IOException{
     //logic to process the clients request object
-		log("Client message recieved " + message.toString());
-		clientQueue.add(message);
+		log("READ MESSAGE " + message.toString());
   }
 
   //listens to the server sockets for a message
   public void handleServerRequest(Message message, int i) throws IOException {
-		log("Server message recieved " + message.toString());
-		serverQueue.add(message);
+    log("Got a request from the server.");
+				log("READ MESSAGE " + message.toString());
   }
 
   //send message to server;
   public void requestToServer(String message, int i) {
     try {
-      log("Sending request to server " + i);
+      log("sending request to server " + i);
       Socket socket = servers[i];
       ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
 			Message send = new Message<String>(message);
       os.writeObject(send);
       os.flush();
+      //os.close();
+      log("sent test");
     } catch(Exception e) {
       e.printStackTrace();
     }
   }
-
-	public Message getServerMessage() throws IOException {
-		if(serverQueue.size() == 0){
-			log("Server queue is empty so null is returned");
-			return null;
-		} else{
-			log("Message popped off the server queue, cunt");
-			return serverQueue.pop();
-		}
-	}
-
-	public Message getClientMessage()throws IOException {
-		if(clientQueue.size() == 0){
-			log("Client queue is empty so null is returned");
-			return null;
-		} else{
-			log("Message popped off the client queue");
-			return clientQueue.pop();
-
-		}
-	}
 
   public boolean isClosing() {
     return this.isClosing;
