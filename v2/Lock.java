@@ -1,4 +1,6 @@
-class Lock {
+import java.io.Serializable;
+
+class Lock implements Serializable {
 
   private String data;
   private LOCK_TYPE lock;
@@ -18,6 +20,10 @@ class Lock {
 
   public void setLock(LOCK_TYPE lock) {
     this.lock = lock;
+  }
+
+  public String toString() {
+    return data + " " +lock;
   }
 }
 

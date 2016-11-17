@@ -1,3 +1,7 @@
+import java.util.LinkedList;
+import java.io.IOException;
+import java.io.*;
+
 class Site {
 
   Server server;
@@ -9,32 +13,36 @@ class Site {
   LinkedList<String> transactions;
   private boolean isClosing = false;
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     Site site = new Site(args);
   }
-  public Site(String args[]) {
+  public Site(String args[]) throws IOException{
 
     // get the arguments
-    String databasePath;
-    Integer serverNumber;
-    Integer port;
-    this.server = new Server(*argument*);
+    Integer serverNumber = Integer.parseInt(args[0]);
+    this.server = new Server(serverNumber);
+    int port = 9030 + serverNumber;
 
     // set quorum values and validate them
-    this.r = Integer.parseInt(*argument*);
-    this.w = Integer.parseInt(*argument*);
-    this.validateQuroumValues(*number of servers*);
+    this.r = Integer.parseInt(args[1]);
+    this.w = Integer.parseInt(args[2]);
+    Boolean correctness = validateQuroumValues(Integer.parseInt(args[3]));
+
+    if(!correctness) {
+      throw new MattBradburyException();
+    }
 
     // data manager class performs actions on the database.
     // lock manager handles locking etc.
-    this.dm = new DataManager(databasePath);
-    this.lm = new LockManager(r, w);
+    this.dm = new DataManager(serverNumber);
+    this.lm = new LockManager(r, w, this.server, 1, serverNumber);
     this.tm = new TransactionManager();
 
-    this.readTransactionFile(*argument*);
+    this.readTransactionFile(serverNumber);
 
     try {
-      this.server.connectServers();
+      this.server.acceptServers(port);
+      this.server.connectServers(Server.parseAddresses(args[4]), serverNumber);
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -44,15 +52,27 @@ class Site {
 
   }
 
+  private boolean validateQuroumValues(int numberOfServers) {
+    int sumRW = this.r + this.w;
+    if (sumRW <= numberOfServers) {
+      System.err.println("The values that you have picked for r and w are not valid");
+      System.exit(1);
+
+    }
+    return true;
+  }
+
   //method to listen to incomming messages from the server
-  public void listenServerMessages();
+  public void listenServerMessages() throws IOException {
+    lm.processRequestMessages();
+  }
 
   //method to process the list of transactions.
-  public void processTransactions() {
-    for (int i = 0; i < this.transactions.length; i++) {
-      String transaction = this.transactions[i];
+  public void processTransactions() throws IOException {
+    for (int i = 0; i < this.transactions.size(); i++) {
+      String transaction = this.transactions.get(i);
       //set transaction on the manager
-      tm.setTransaction(transaction);
+      LinkedList<String> queries = tm.setTransaction(transaction);
 
       //get the information on needed locks
       LinkedList<Lock> locks = tm.getLockInfo();
@@ -62,7 +82,7 @@ class Site {
 
       // make the changes
       if (gotLocks) {
-        dm.setTransaction(transaction);
+        dm.setTransaction(queries);
         VarList values = dm.runTransaction();
 
         lm.releaseLocks(values);
@@ -82,18 +102,33 @@ class Site {
     return isClosing;
   }
 
-  public void readTransactionFile(int serverNumber) {
-    String filePath = "trans" + serverNumber + ".txt";
-    BufferedReader br = new BufferedReader(new FileReader(filePath));
-    LinkedList<String> transactions = new LinkedList<String>();
-    String line = br.readLine();
-    while (line != null) {
-      transactions.add(line);
-      line = br.readLine();
+  public void readTransactionFile(int serverNumber) throws IOException {
+    try {
+      String filePath = "trans" + serverNumber + ".txt";
+      BufferedReader br = new BufferedReader(new FileReader(filePath));
+      LinkedList<String> transactions = new LinkedList<String>();
+      String line = br.readLine();
+      while (line != null) {
+        transactions.add(line);
+        line = br.readLine();
+      }
+      br.close();
+      this.transactions = transactions;
+    } catch (FileNotFoundException e) {
+      System.out.println("No transactions to process, listening");
+      this.transactions = new LinkedList<String>();
     }
-    br.close();
-    this.transactions = transactions;
   }
 
 
+}
+
+class MattBradburyException extends RuntimeException {
+  public MattBradburyException(){
+       super("I'm dissapointed in you");
+   }
+
+   public MattBradburyException(String message){
+       super(message);
+   }
 }

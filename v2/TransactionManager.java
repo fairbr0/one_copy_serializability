@@ -8,7 +8,7 @@ public class TransactionManager {
 
   public TransactionManager() { }
 
-  public void setTransaction(String transaction){
+  public LinkedList<String> setTransaction(String transaction){
     this.transaction = transaction;
     this.queries = new LinkedList<String>();
 
@@ -16,6 +16,8 @@ public class TransactionManager {
     for (String query : queries) {
       this.queries.add(query);
     }
+
+    return this.queries;
   }
 
   public LinkedList<Lock> getLockInfo() {

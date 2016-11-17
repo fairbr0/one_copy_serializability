@@ -2,6 +2,7 @@ import java.net.*;
 import java.io.*;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class Server {
 
@@ -12,21 +13,24 @@ class Server {
 	private Logger logger;
 	private LinkedList<Message> requestQueue;
   private LinkedList<Message> responseQueue;
+	private int portNumber;
 
-	public Server(String databaseFilePath) throws IOException {
-		this.logger = new Logger(databaseFilePath, "Server"); //Here we want to document what type of server this is
+	public Server(int serverNumber) throws IOException {
+		this.logger = new Logger(serverNumber); //Here we want to document what type of server this is
 		this.isClosing = false;
-		this.logger.writeDatabase("10");
 		this.responseQueue = new LinkedList<Message>();
     this.requestQueue = new LinkedList<Message>();
 	}
 
   public void acceptServers(int port) throws IOException {
     serverSocket = new ServerSocket(port);
+		this.portNumber = port;
   }
 
-  public void connectServers(InetSocketAddress[] servers, int serverNumber) throws IOException{
+	public void connectServers(InetSocketAddress[] servers, int serverNumber) throws IOException{
     this.servers = new Socket[servers.length];
+
+		AtomicInteger counter = new AtomicInteger(0);
 
 		//int serverNumber = Integer.parseInt(this.databaseFilePath.replaceAll("\\D", ""));
     this.serverListenerThread = new Thread(() -> {
@@ -34,13 +38,14 @@ class Server {
       while (!this.isClosing()) {
         try {
           //add socket to array
-          log("Listening for server connections" + k);
+          log("Listening for server connections" + k + " on " + portNumber);
           Socket socket = serverSocket.accept();
           log("Server " + k + " connected");
           socket.setTcpNoDelay(true);
           socket.setSoTimeout(300000);
           this.servers[k] = socket;
           this.listenServer(k++);
+					counter.getAndIncrement();
         } catch (Exception e) {
           if (this.isClosing()) continue;
           System.err.println(e);
@@ -64,6 +69,7 @@ class Server {
 					this.servers[i] = new Socket(address, port);
           this.listenServer(i);
 					connected = true;
+					counter.getAndIncrement();
 				} catch (ConnectException e) {
 					log("Connection refused");
 					count += 1;
@@ -77,8 +83,11 @@ class Server {
         }
  			}
 		}
-  }
 
+		while (counter.get() < servers.length) {
+			//Hacky as fuck
+		}
+  }
   //listen on given socket for client activity
   public void listenServer(int i) {
     Thread listenThread = new Thread(() -> {
@@ -97,7 +106,7 @@ class Server {
     listenThread.start();
   }
 
-  public void broadcast(Message m) {
+  public int broadcast(Message m) {
 
     try {
       log("Broadcasting to servers");
@@ -107,16 +116,21 @@ class Server {
     } catch (Exception e) {
       e.printStackTrace();
     }
+		return servers.length;
   }
 
   //listens to the server sockets for a message
   public void handleServerRequest(Message message, int i) throws IOException {
+		System.out.println("Server message recieved " + message.toString());
 		log("Server message recieved " + message.toString());
-    if (containsFlag(message.getFlags(), Flag.RSP)) {
+    if (FlagChecker.containsFlag(message.getFlags(), Flag.RSP)) {
       responseQueue.add(message);
-    } else if (containsFlag(message.getFlags(), Flag.REQ)) {
+			System.out.println("Message added to response queue");
+    } else if (FlagChecker.containsFlag(message.getFlags(), Flag.REQ)) {
       requestQueue.add(message);
-    }
+			System.out.println("Server message recieved " + message.toString());
+			System.out.println("Message added to request queue");
+		}
 
   }
 
@@ -137,23 +151,31 @@ class Server {
   }
 
 	public Message getServerResponseMessage() throws IOException {
-		if(responseQueue.size() == 0){
-			log("Server queue is empty so null is returned");
-			return null;
-		} else{
-			log("Message popped off the server queue");
-			return responseQueue.pop();
+		while (responseQueue.size() == 0){
+			try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
+		log("Message popped off the server queue");
+		System.out.println("Message popped off the server queue");
+		return responseQueue.pop();
+
 	}
 
   public Message getServerRequestMessage() throws IOException {
-		if(requestQueue.size() == 0){
-			log("Server queue is empty so null is returned");
-			return null;
-		} else{
-			log("Message popped off the server queue");
-			return requestQueue.pop();
+		while (requestQueue.size() == 0){
+			try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
+		log("Message popped off the server queue");
+		System.out.println("Message popped off the server queue");
+		return requestQueue.pop();
+
 	}
 
   public boolean isClosing() {
@@ -177,12 +199,6 @@ class Server {
 		return addresses;
 	}
 
-  private boolean containsFlag(Flag[] flags, Flag f) {
-    for (Flag s : flags) {
-      if (s == f) return true;
-    }
-    return false;
-  }
 
 	public void log(String message) throws IOException {
 		logger.writeLog(message);

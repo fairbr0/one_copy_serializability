@@ -1,0 +1,6 @@
+//This file specifies a single transaction
+
+server 1; begin T1; read x; write x; commit T1;
+
+//server 1; begin T3; read x; write x; read y; write y; commit T3;
+//server 3; begin T2; x = 100; write x; read x; commit T2;
