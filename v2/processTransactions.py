@@ -3,21 +3,21 @@ import sys;
 servers = [];
 
 def processLine(line, lineNumber):
-	print "processing line " + str(lineNumber)
+	print ("processing line " + str(lineNumber))
 	words = line.split();
-	print words
+	print (words)
 
 	try:
 		fileName = "trans" + words[1].strip(';')+".txt";
-		print fileName;
+		print (fileName);
 		#check if this exists or not - currently it is just appending to the file
-		print words[2:];
+		print (words[2:]);
 		addLine = " ".join(words[2:]);
 		file = open(fileName, 'a');
 		file.write(addLine);
 		file.write("\n");
 	except:
-		print "Matt made a boo boo";
+		print ("Matt made a boo boo");
 		sys.exit(1);
 
 	#check if ther server is in our array of servers or add it
