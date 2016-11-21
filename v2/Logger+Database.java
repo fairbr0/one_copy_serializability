@@ -15,14 +15,14 @@ import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-public class Logger {
+class Loggerb {
 
 	private String logFilePath;
   private String databaseFilePath;
 	private String type;
 	private int serverNumber;
 
-  public Logger(String path, String type) throws IOException{
+  public Loggerb(String path, String type) throws IOException{
 		if(type == "Server"){
 			this.serverNumber=Integer.parseInt(path);
 			this.type = type;

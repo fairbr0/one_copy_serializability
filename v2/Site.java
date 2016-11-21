@@ -46,10 +46,14 @@ class Site {
     } catch (IOException e) {
       e.printStackTrace();
     }
-
-    this.listenServerMessages();
-    this.processTransactions();
-
+		try {
+			Thread.sleep(10000);
+			this.server.printWrappedServers();
+    	this.listenServerMessages();
+    	this.processTransactions();
+	} catch (InterruptedException e) {
+		e.printStackTrace();
+	}
   }
 
   private boolean validateQuroumValues(int numberOfServers) {

@@ -42,23 +42,22 @@ public class LockManager {
 
     Message<LinkedList<Lock>> message = new Message<LinkedList<Lock>>(flags, locklist, serverNumber);
     System.out.println("lock message going out from server " + serverNumber + " is " + message.toString());
-    int numberOfSentMessages = server.broadcast(message);
+    int n = server.broadcast(message);
 
     // intercept message responses
-    for (int i = 0; i < numberOfSentMessages, i++) {
+    for (int i = 0; i < n; i++) {
         Message<HashMap> response = server.getServerResponseMessage();
         System.out.println(response.toString());
-        Flags[] flags = m.getFlags();
-        HashMap<String, Integer> payload = m.getData();
-        if (FlagChecker.containsFlag(flags, Flag.ACK)) {
-          
-        } else if (FlagChecker.containsFlag(flags, Flag.REJ)) {
+        Flag[] responseFlags = response.getFlags();
+        HashMap<String, Integer> payload = response.getMessage();
+        if (FlagChecker.containsFlag(responseFlags, Flag.ACK)) {
+
+        } else if (FlagChecker.containsFlag(responseFlags, Flag.REJ)) {
           continue;
         } else {
           throw new MattBradburyException("Another Matt boo boo");
         }
     }
-    System.out.println("Got votes back: " + response.toString());
     return true;
   }
 
@@ -94,7 +93,7 @@ public class LockManager {
                 votes.replace(item.getData(), 0);
                 //send the person votes
               } else if (votes.containsKey(item.getData())) {
-                flasg[0] = Flag.REJ;
+                flags[0] = Flag.REJ;
                 //its seen it before but it has no votes
                 votesToSend.replace(item.getData(), 0);
                 //send a rejection
