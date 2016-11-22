@@ -1,8 +1,9 @@
 import java.util.LinkedList;
+import java.io.IOException;
 
 public class TransactionManagerTest {
 
-  public static void main(String args[]) {
+  public static void main(String args[]) throws IOException  {
     TransactionManagerTest tests = new TransactionManagerTest();
     tests.setTransactionTest();
     tests.getLockInfoReadTest();
@@ -12,9 +13,9 @@ public class TransactionManagerTest {
     tests.updateLocksWriteReadTest();
   }
 
-  void setTransactionTest() {
+  void setTransactionTest() throws IOException {
     String s = "Begin T1; read x; x = 20; write x; commit T1";
-    TransactionManager tm = new TransactionManager();
+    TransactionManager tm = new TransactionManager(new Logger(0));
     tm.setTransaction(s);
     LinkedList<String> queries = tm.queries;
 
@@ -23,9 +24,9 @@ public class TransactionManagerTest {
     }
   }
 
-  void getLockInfoWriteTest() {
+  void getLockInfoWriteTest() throws IOException ccc{
     String s = "Begin T1; read x; x = 20; write x; commit T1";
-    TransactionManager tm = new TransactionManager();
+    TransactionManager tm = new TransactionManager(new Logger(0));
     tm.setTransaction(s);
     LinkedList<Lock> locks = tm.getLockInfo();
 
@@ -34,9 +35,9 @@ public class TransactionManagerTest {
     }
   }
 
-  void getLockInfoReadTest() {
+  void getLockInfoReadTest() throws IOException {
     String s = "Begin T1; read x; x = 20; commit T1";
-    TransactionManager tm = new TransactionManager();
+    TransactionManager tm = new TransactionManager(new Logger(0));
     tm.setTransaction(s);
     LinkedList<Lock> locks = tm.getLockInfo();
 
@@ -45,12 +46,12 @@ public class TransactionManagerTest {
     }
   }
 
-  void updateLocksReadReadTest() {
+  void updateLocksReadReadTest() throws IOException {
     LinkedList<Lock> list = new LinkedList<Lock>();
     Lock l = new Lock("X", LOCK_TYPE.READ);
     list.add(l);
 
-    TransactionManager tm = new TransactionManager();
+    TransactionManager tm = new TransactionManager(new Logger(0));
     tm.updateLocks(list, "X", LOCK_TYPE.READ);
 
     for (Lock m : list) {
@@ -58,12 +59,12 @@ public class TransactionManagerTest {
     }
   }
 
-  void updateLocksReadWriteTest() {
+  void updateLocksReadWriteTest() throws IOException {
     LinkedList<Lock> list = new LinkedList<Lock>();
     Lock l = new Lock("X", LOCK_TYPE.READ);
     list.add(l);
 
-    TransactionManager tm = new TransactionManager();
+    TransactionManager tm = new TransactionManager(new Logger(0));
     tm.updateLocks(list, "X", LOCK_TYPE.WRITE);
 
     for (Lock m : list) {
@@ -71,12 +72,12 @@ public class TransactionManagerTest {
     }
   }
 
-  void updateLocksWriteReadTest() {
+  void updateLocksWriteReadTest() throws IOException {
     LinkedList<Lock> list = new LinkedList<Lock>();
     Lock l = new Lock("X", LOCK_TYPE.WRITE);
     list.add(l);
 
-    TransactionManager tm = new TransactionManager();
+    TransactionManager tm = new TransactionManager(new Logger(0));
     tm.updateLocks(list, "X", LOCK_TYPE.READ);
 
     for (Lock m : list) {

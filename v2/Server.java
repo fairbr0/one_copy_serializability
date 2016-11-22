@@ -16,9 +16,10 @@ class Server {
   private LinkedList<Message> responseQueue;
 	private int portNumber;
 	private int serverNumber;
+	public int numOfServers;
 
-	public Server(int serverNumber) throws IOException {
-		this.logger = new Logger(serverNumber); //Here we want to document what type of server this is
+	public Server(int serverNumber, Logger logger) throws IOException {
+		this.logger = logger;  //Here we want to document what type of server this is
 		this.isClosing = false;
 		this.responseQueue = new LinkedList<Message>();
     this.requestQueue = new LinkedList<Message>();
@@ -43,9 +44,9 @@ class Server {
       while (!this.isClosing()) {
         try {
           //add socket to array
-          log("Listening for server connections" + k + " on " + portNumber);
+          log("<server> Listening for server connections" + k + " on " + portNumber);
           Socket socket = serverSocket.accept();
-          log("Server " + k + " connected");
+          log("<server> Server " + k + " connected");
           socket.setTcpNoDelay(true);
           socket.setSoTimeout(300000);
           this.servers[k] = socket;
@@ -60,7 +61,7 @@ class Server {
     });
     this.serverListenerThread.start();
 
-    log("Trying to connect to servers ");
+    log("<server> Trying to connect to servers ");
 		for (int i = serverNumber; i < servers.length; i++) {
 			int port = servers[i].getPort();
 			InetAddress address = servers[i].getAddress();
@@ -70,13 +71,13 @@ class Server {
 			while (count < 10 && !connected) {
         //add socket to array
 				try {
-          log("Trying to connect to server " + i);
+          log("<server> Trying to connect to server " + i);
 					this.servers[i] = new Socket(address, port);
           this.listenServer(i);
 					connected = true;
 					counter.getAndIncrement();
 				} catch (ConnectException e) {
-					log("Connection refused");
+					log("<server> Connection refused");
 					count += 1;
 					try {
 						Thread.sleep(1000);
@@ -89,17 +90,17 @@ class Server {
  			}
 		}
 
-		System.out.println("Connected to all servers");
+		log("<server> Connected to all servers");
 
 		while (counter.get() < servers.length) {
 			//Hacky as fuck
 		}
 
+		this.numOfServers = servers.length;
 		configureServers();
   }
 
 	public void configureServers() {
-			System.out.println("Configure servers called");
 			Flag[] flags = new Flag[1];
 			flags[0] = Flag.HAND;
 			Message<Integer> m = new Message<Integer>(flags, this.serverNumber, this.serverNumber);
@@ -119,15 +120,15 @@ class Server {
         do {
           Socket s = servers[i];
           ObjectInputStream is = new ObjectInputStream(s.getInputStream());
-          log("Listening for server messages");
+          log("<server> Listening for server messages");
           Message recieved = (Message)is.readObject();
 					if(FlagChecker.containsFlag(recieved.getFlags(), Flag.HAND)) {
-							Object serverNumber = recieved.getMessage();
-							int serverNum = (Integer) serverNumber;
-							System.out.println("We have got a message from some server whose server number is " + serverNum);
-							wrappedServers[i] = new SocketWrapper(servers[i], serverNum);
+						Object serverNumber = recieved.getMessage();
+						int serverNum = (Integer) serverNumber;
+						wrappedServers[i] = new SocketWrapper(servers[i], serverNum);
+					} else {
+          	handleServerRequest(recieved, i);
 					}
-          handleServerRequest(recieved, i);
         } while (!isClosing());
       } catch (Exception e) {
         e.printStackTrace();
@@ -139,11 +140,13 @@ class Server {
   public int broadcast(Message m) {
 
     try {
-      log("Broadcasting to servers");
-      for (int i = 0; i < servers.length+1; i++) {
-				if(i!= serverNumber){
-        	requestToServer(m, i);
-				}
+      log("<server> Broadcasting to servers");
+      for (int i = 0; i < servers.length; i++) {
+				int k = i;
+				if(k >= serverNumber){
+					k += 1;
+        }
+				requestToServer(m, k);
       }
 			return servers.length;
     } catch (Exception e) {
@@ -154,33 +157,30 @@ class Server {
 
   //listens to the server sockets for a message
   public void handleServerRequest(Message message, int i) throws IOException {
-		System.out.println("Server message recieved " + message.toString());
-		log("Server message recieved " + message.toString());
+		log("<server> Message recieved " + message.toString());
 		if (FlagChecker.containsFlag(message.getFlags(), Flag.RSP)) {
       responseQueue.add(message);
-			System.out.println("Message added to response queue");
+			log("<server> Message added to response queue");
     } else if (FlagChecker.containsFlag(message.getFlags(), Flag.REQ)) {
       requestQueue.add(message);
-			System.out.println("Server message recieved " + message.toString());
-			System.out.println("Message added to request queue");
+			log("<server> Server message recieved " + message.toString());
+			log("<server> Message added to request queue");
 		}
 
   }
 
 	public void initialRequestToServer(Message message) {
 		try {
-			System.out.println("Broadcasting to servers");
-      log("Broadcasting to servers");
+      log("<server> Broadcasting to servers");
       for (int i = 0; i < servers.length; i++) {
 				if(servers[i] != null){
-        	log("Sending request to server " + i);
 		      Socket socket = servers[i];
 		      ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
 		      os.writeObject(message);
 		      os.flush();
 				}
       }
-			System.out.println("Connection broadcast complete");
+			log("<server> Connection broadcast complete");
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -189,19 +189,17 @@ class Server {
   //send message to server;
   public void requestToServer(Message message, int i) {
     try {
-      log("Sending request to server " + i);
+      log("<server> Sending request to server " + i);
       Socket socket = getCorrectSocket(i);
       ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
       os.writeObject(message);
       os.flush();
-      log("Sent test");
     } catch(Exception e) {
       e.printStackTrace();
     }
   }
 
 	public Socket getCorrectSocket(int i) {
-		System.out.println(i);
 		for (int j=0; j<wrappedServers.length; j++) {
 			if(wrappedServers[j].getServerNumber() == i) {
 				return wrappedServers[j].getSocket();
@@ -218,8 +216,7 @@ class Server {
 				e.printStackTrace();
 			}
 		}
-		log("Message popped off the server queue");
-		System.out.println("Message popped off the server queue");
+		log("<server> Message popped off the response queue");
 		return responseQueue.pop();
 
 	}
@@ -232,8 +229,7 @@ class Server {
 				e.printStackTrace();
 			}
 		}
-		log("Message popped off the server queue");
-		System.out.println("Message popped off the server queue");
+		log("<server> Message popped off the server queue");
 		return requestQueue.pop();
 
 	}
@@ -260,7 +256,8 @@ class Server {
 	}
 
 
-	public void log(String message) throws IOException {
+	private void log(String message) throws IOException {
+		System.out.println(message);
 		logger.writeLog(message);
 	}
 }

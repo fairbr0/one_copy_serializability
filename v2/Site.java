@@ -11,16 +11,19 @@ class Site {
   int r;
   int w;
   LinkedList<String> transactions;
+  Logger logger;
   private boolean isClosing = false;
 
   public static void main(String[] args) throws IOException {
     Site site = new Site(args);
   }
+
   public Site(String args[]) throws IOException{
 
     // get the arguments
     Integer serverNumber = Integer.parseInt(args[0]);
-    this.server = new Server(serverNumber);
+    this.logger = new Logger(serverNumber);
+    this.server = new Server(serverNumber, logger);
     int port = 9030 + serverNumber;
 
     // set quorum values and validate them
@@ -34,9 +37,9 @@ class Site {
 
     // data manager class performs actions on the database.
     // lock manager handles locking etc.
-    this.dm = new DataManager(serverNumber);
-    this.lm = new LockManager(r, w, this.server, 1, serverNumber);
-    this.tm = new TransactionManager();
+    this.dm = new DataManager(serverNumber, logger, this.server);
+    this.lm = new LockManager(r, w, this.server, 1, serverNumber, logger);
+    this.tm = new TransactionManager(logger);
 
     this.readTransactionFile(serverNumber);
 
@@ -47,13 +50,13 @@ class Site {
       e.printStackTrace();
     }
 		try {
-			Thread.sleep(10000);
-			this.server.printWrappedServers();
+      Thread.sleep(3000);
+			//this.server.printWrappedServers();
     	this.listenServerMessages();
     	this.processTransactions();
-	} catch (InterruptedException e) {
-		e.printStackTrace();
-	}
+	  } catch (InterruptedException e) {
+		  e.printStackTrace();
+	  }
   }
 
   private boolean validateQuroumValues(int numberOfServers) {

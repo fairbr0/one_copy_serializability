@@ -1,3 +1,3 @@
 public enum Flag {
-  ACK, REQ, REJ, RSP,GETVOTES,HAND;
+  ACK, REQ, REJ, RSP,GETVOTES,HAND, WRITE;
 }

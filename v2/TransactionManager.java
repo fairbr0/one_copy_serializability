@@ -1,12 +1,16 @@
 import java.util.LinkedList;
 import java.util.Iterator;
+import java.io.IOException;
 
 public class TransactionManager {
 
   String transaction;
   LinkedList<String> queries;
+  Logger logger;
 
-  public TransactionManager() { }
+  public TransactionManager(Logger logger) {
+    this.logger = logger;
+  }
 
   public LinkedList<String> setTransaction(String transaction){
     this.transaction = transaction;
@@ -23,6 +27,7 @@ public class TransactionManager {
   public LinkedList<Lock> getLockInfo() {
     LinkedList<Lock> lockInfo = new LinkedList<Lock>();
 
+    log("<tm> Getting locks for 2PL");
     // get the parts of the query;
     for (String query : this.queries) {
       String[] parts = query.split(" ");
@@ -37,6 +42,7 @@ public class TransactionManager {
       }
     }
 
+    log("<tm> Locks required: " + lockInfo.toString());
     return lockInfo;
 
   }
@@ -65,6 +71,15 @@ public class TransactionManager {
     l = new Lock(data, lock);
     locks.add(l);
     return;
+  }
+
+  private void log(String message) {
+    try {
+      System.out.println(message);
+		  logger.writeLog(message);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
 }
