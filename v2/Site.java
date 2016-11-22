@@ -90,9 +90,9 @@ class Site {
       // make the changes
       if (gotLocks) {
         dm.setTransaction(queries);
-        VarList values = dm.runTransaction();
+        boolean release = dm.runTransaction();
 
-        lm.releaseLocks(values);
+        if (release) lm.releaseLocks();
       } else {
         //super nasty for loop ahhaha
         i--;

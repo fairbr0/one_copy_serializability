@@ -59,7 +59,7 @@ public class LockManager {
         //add votes
         //check vote count. if enough, break
         //store which server sent votes for release
-        
+
 
       } else if (FlagChecker.containsFlag(responseFlags, Flag.REJ)) {
         //if read, check if rej due to read or write.
@@ -137,9 +137,11 @@ public class LockManager {
 		thread.start();
 	}
 
-  public boolean releaseLocks(VarList values) {
+  public boolean releaseLocks() {
     // values is a list of values which were updated in the transaction.
     // must propogate the update
+
+    log("<lm> Releasing Locks");
     return true;
   }
 

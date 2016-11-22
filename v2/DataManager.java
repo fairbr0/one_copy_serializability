@@ -2,6 +2,7 @@ import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.HashSet;
 import java.io.IOException;
+import java.io.Serializable;
 
 public class DataManager {
 
@@ -9,18 +10,20 @@ public class DataManager {
   Database db;
   Logger logger;
   Server server;
+  int serverNumber;
 
   public DataManager(int serverNumber, Logger logger, Server server) throws IOException {
       this.db = new Database(serverNumber);
       this.logger = logger;
       this.server = server;
+      this.serverNumber = serverNumber;
   }
 
   public void setTransaction(LinkedList<String> transaction) {
     this.transaction = transaction;
   }
 
-  public void runTransaction() throws IOException{
+  public boolean runTransaction() throws IOException{
     VarList variables = new VarList();
     VarList writtenVars = new VarList();
     log("<dm> Locks all aquired. Running transaction");
@@ -73,22 +76,41 @@ public class DataManager {
       }
     }
     ///need to change to return only modified values. Hack to make it compile
-
+    return true;
   }
 
-  public boolean propogateWrites(VarList vars) {
+  public void listenWriteCommand() {
+    Thread thread = new Thread(() -> {
+      try {
+        while (true) {
+          Message m = server.getServerWriteMessage();
+          VarList varlist = (VarList) m.getMessage();
+          for (Var var : VarList.getVarList()) {
+            this.db.writeDatabase(var.data, var.value);
+          }
+          Flag[] flags = {Flag.RSP, Flag.ACK};
+          Message resp = new Message<String>(flags, "", this.serverNumber);
+        }
+        Thread.sleep(10);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    });
+  }
+
+  public boolean propogateWrites(VarList vars) throws IOException {
     log("<dm> Propogating Writes to servers.");
     Flag[] flags = new Flag[1];
     flags[0] = Flag.WRITE;
-    Message m = new Message<VarList>(flags, vars);
+    Message m = new Message<VarList>(flags, vars, this.serverNumber);
 
     int n = server.broadcast(m);
 
     for (int i = 0; i < n; i++) {
-      Message m = server.getServerResponseMessage();
-      Flag[] flags = m.getFlags();
-      if (!containsFlag(flags, Flag.ACK)) {
-        throw new Exception();
+      Message rec = server.getServerResponseMessage();
+      Flag[] recFlags = rec.getFlags();
+      if (!FlagChecker.containsFlag(flags, Flag.ACK)) {
+        throw new IOException();
       }
     }
 
@@ -106,7 +128,7 @@ public class DataManager {
 
 }
 
-class Var {
+class Var implements Serializable {
   String data;
   int value;
 
@@ -120,7 +142,7 @@ class Var {
   }
 }
 
-class VarList {
+class VarList implements Serializable {
   LinkedList<Var> vars;
 
   public VarList() {
@@ -151,5 +173,13 @@ class VarList {
       }
     }
     return null;
+  }
+
+  public LinkedList<Var> getVarList() {
+    return this.vars;
+  }
+
+  public int size() {
+    return vars.size();
   }
 }

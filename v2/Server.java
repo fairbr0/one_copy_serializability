@@ -14,6 +14,7 @@ class Server {
 	private Logger logger;
 	private LinkedList<Message> requestQueue;
   private LinkedList<Message> responseQueue;
+	private LinkedList<Message> writeQueue;
 	private int portNumber;
 	private int serverNumber;
 	public int numOfServers;
@@ -165,6 +166,9 @@ class Server {
       requestQueue.add(message);
 			log("<server> Server message recieved " + message.toString());
 			log("<server> Message added to request queue");
+		} else if (FlagChecker.containsFlag(message.getFlags(), Flag.WRITE)) {
+			writeQueue.add(message);
+			log("<server> Message Added to write queue");
 		}
 
   }
@@ -231,6 +235,19 @@ class Server {
 		}
 		log("<server> Message popped off the server queue");
 		return requestQueue.pop();
+
+	}
+
+	public Message getServerWriteMessage() throws IOException {
+		while (writeQueue.size() == 0){
+			try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		log("<server> Message popped off the server queue");
+		return writeQueue.pop();
 
 	}
 

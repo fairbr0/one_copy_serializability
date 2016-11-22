@@ -24,7 +24,7 @@ public class TransactionManagerTest {
     }
   }
 
-  void getLockInfoWriteTest() throws IOException ccc{
+  void getLockInfoWriteTest() throws IOException {
     String s = "Begin T1; read x; x = 20; write x; commit T1";
     TransactionManager tm = new TransactionManager(new Logger(0));
     tm.setTransaction(s);
