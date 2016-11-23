@@ -24,6 +24,7 @@ class Server {
 		this.isClosing = false;
 		this.responseQueue = new LinkedList<Message>();
     this.requestQueue = new LinkedList<Message>();
+		this.writeQueue = new LinkedList<Message>();
 		this.serverNumber = serverNumber;
 	}
 
@@ -246,7 +247,7 @@ class Server {
 				e.printStackTrace();
 			}
 		}
-		log("<server> Message popped off the server queue");
+		log("<server> Message popped off the write queue");
 		return writeQueue.pop();
 
 	}

@@ -12,7 +12,7 @@ if (n < 4 or n > 10):
 
 address = "localhost:903"
 for i in range(0, n):
-    s = "java Site " + str(i) + " 2" + " 8 " + str(n) + " "
+    s = "java Site " + str(i) + " 2" + " 3 " + str(n) + " "
     for j in range(0, n-1):
         if i != j:
             s += address+ str(j) +','

@@ -28,7 +28,7 @@ public class DataManager {
     VarList writtenVars = new VarList();
     log("<dm> Locks all aquired. Running transaction");
     //todo : Copy the database file. Run each transaction line on the database file and
-    // update as needed. Once read commit, write. If interupted, revert to the copy.
+    // update as needed. Once read , write. If interupted, revert to the copy.
 
     for (String query : transaction) {
       String[] parts = query.split(" ");
@@ -63,6 +63,8 @@ public class DataManager {
         log("<dm> Committing Transation");
         if (writtenVars.size() > 0) {
           boolean result = propogateWrites(writtenVars);
+
+					//The system gets to here... now we want to do a two way handshake
           //do something with result
         }
       }
@@ -83,19 +85,26 @@ public class DataManager {
     Thread thread = new Thread(() -> {
       try {
         while (true) {
+					log("<dm> got a listen write command");
           Message m = server.getServerWriteMessage();
           VarList varlist = (VarList) m.getMessage();
-          for (Var var : VarList.getVarList()) {
-            this.db.writeDatabase(var.data, var.value);
+					int sender = m.serverNumber;
+          for (Var var : varlist.getVarList()) {
+            this.db.writeDatabase(var.data +"="+ Integer.toString(var.value));
+						log("<dm> Wrote recieved changes to the database");
           }
           Flag[] flags = {Flag.RSP, Flag.ACK};
           Message resp = new Message<String>(flags, "", this.serverNumber);
+					this.server.requestToServer(resp, sender );
+        	Thread.sleep(10);
         }
-        Thread.sleep(10);
       } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+				e.printStackTrace();
+			} catch (IOException e) {
+			  e.printStackTrace();
+			}
     });
+		thread.start();
   }
 
   public boolean propogateWrites(VarList vars) throws IOException {
@@ -108,11 +117,16 @@ public class DataManager {
 
     for (int i = 0; i < n; i++) {
       Message rec = server.getServerResponseMessage();
+			log("<dm> " + rec.toString());
       Flag[] recFlags = rec.getFlags();
-      if (!FlagChecker.containsFlag(flags, Flag.ACK)) {
+      if (!FlagChecker.containsFlag(recFlags, Flag.ACK)) {
         throw new IOException();
       }
+
+
     }
+
+		log("<dm> Got ack from all servers");
 
     return true;
   }

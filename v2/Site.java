@@ -52,6 +52,7 @@ class Site {
 		try {
       Thread.sleep(3000);
 			//this.server.printWrappedServers();
+			this.dm.listenWriteCommand();
     	this.listenServerMessages();
     	this.processTransactions();
 	  } catch (InterruptedException e) {
@@ -91,7 +92,7 @@ class Site {
       if (gotLocks) {
         dm.setTransaction(queries);
         boolean release = dm.runTransaction();
-
+				System.out.println("Transaction complete");
         if (release) lm.releaseLocks();
       } else {
         //super nasty for loop ahhaha
