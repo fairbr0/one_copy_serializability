@@ -10,6 +10,7 @@ class Server {
   private Thread serverListenerThread;
   private boolean isClosing;
   private Socket servers[];
+	private ObjectOutputStream serverOutputStreams[];
 	private SocketWrapper wrappedServers[];
 	private Logger logger;
 	private LinkedList<Message> requestQueue;
@@ -204,6 +205,15 @@ class Server {
     }
   }
 
+	private ObjectOutputStream getCorrectStream(int i) {
+		for (int j=0; j<wrappedServers.length; j++) {
+			if(wrappedServers[j].getServerNumber() == i) {
+				return wrappedServers[j].getOutputStream();
+			}
+		}
+		return null;
+	}
+
 	public Socket getCorrectSocket(int i) {
 		for (int j=0; j<wrappedServers.length; j++) {
 			if(wrappedServers[j].getServerNumber() == i) {
@@ -275,7 +285,7 @@ class Server {
 
 
 	private void log(String message) throws IOException {
-		System.out.println(message);
+		//System.out.println(message);
 		logger.writeLog(message);
 	}
 }
