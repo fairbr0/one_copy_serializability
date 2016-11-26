@@ -7,6 +7,7 @@ public class TransactionManager {
   String transaction;
   LinkedList<String> queries;
   Logger logger;
+	int transactionNumber;
 
   public TransactionManager(Logger logger) {
     this.logger = logger;
@@ -24,6 +25,10 @@ public class TransactionManager {
     return this.queries;
   }
 
+	public int getTransactionNumber() {
+		return this.transactionNumber;
+	}
+
   public LinkedList<Lock> getLockInfo() {
     LinkedList<Lock> lockInfo = new LinkedList<Lock>();
 
@@ -39,7 +44,11 @@ public class TransactionManager {
         String data = parts[1];
         LOCK_TYPE lock = LOCK_TYPE.WRITE;
         updateLocks(lockInfo, data, lock);
-      }
+      } else if(parts[0].equals("begin")) {
+				String number = parts[1].replace("T", "");
+				this.transactionNumber = Integer.parseInt(number);
+				System.out.println("The transaction number is " + this.transactionNumber);
+			}
     }
 
     log("<tm> Locks required: " + lockInfo.toString());

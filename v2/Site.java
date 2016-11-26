@@ -84,9 +84,10 @@ class Site {
 
       //get the information on needed locks
       LinkedList<Lock> locks = tm.getLockInfo();
+			int transactionNumber = tm.getTransactionNumber();
 
       //aquire the locks
-      boolean gotLocks = lm.getLocks(locks);
+      boolean gotLocks = lm.getLocks(locks, transactionNumber);
 
       // make the changes
       if (gotLocks) {
