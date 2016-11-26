@@ -23,7 +23,7 @@ public class DataManager {
     this.transaction = transaction;
   }
 
-  public boolean runTransaction() throws IOException{
+  public LinkedList<String> runTransaction() throws IOException{
     VarList variables = new VarList();
     VarList writtenVars = new VarList();
     log("<dm> Locks all aquired. Running transaction");
@@ -78,8 +78,18 @@ public class DataManager {
       }
     }
     ///need to change to return only modified values. Hack to make it compile
-    return true;
+
+    return varToStringConverter(writtenVars.getVarList());
   }
+
+	private LinkedList<String> varToStringConverter(LinkedList<Var> varList) {
+		LinkedList<String> list = new LinkedList<String>();
+		Iterator<Var> it = varList.iterator();
+		while (it.hasNext()) {
+			list.add(it.next().data);
+		}
+		return list;
+	}
 
   public void listenWriteCommand() {
     Thread thread = new Thread(() -> {
@@ -91,7 +101,7 @@ public class DataManager {
 					int sender = m.serverNumber;
           for (Var var : varlist.getVarList()) {
             this.db.writeDatabase(var.data +"="+ Integer.toString(var.value));
-						log("<dm> Wrote recieved changes to the database");
+						log("<dm> Wrote recieved changes to the database with data = " + var.data  + " and value = " + var.value);
           }
           Flag[] flags = {Flag.RSP, Flag.ACK};
           Message resp = new Message<String>(flags, "", this.serverNumber);

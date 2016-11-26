@@ -91,9 +91,9 @@ class Site {
       // make the changes
       if (gotLocks) {
         dm.setTransaction(queries);
-        boolean release = dm.runTransaction();
+        LinkedList<String> varlist = dm.runTransaction();
 				System.out.println("Transaction complete");
-        if (release) lm.releaseLocks();
+				lm.releaseLocks(varlist);
       } else {
         //super nasty for loop ahhaha
         i--;
