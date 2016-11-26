@@ -1,11 +1,16 @@
 //This file specifies a single transaction
 
-server 1; begin T1; read x; x = 100; write x; commit T1;
+//server 1; begin T1; read x; x = 100; write x; y = 100; write y; commit T1;
 
-server 2; begin T2; read x; x = 300; write x; commit T2;
+//server 2; begin T2; read x; x = 300; write x; read y; commit T2;
 
-server 3; begin T3; read x; x = 200; write x; commit T3;
+//server 3; begin T3; read x; x = 200; write x; commit T3;
 
 //server 1; begin T3; read x; write x; read y; write y; commit T3;
 
 //server 3; begin T2; y = 200; write y; read y; commit T2;
+
+server 1; begin T1; read y; commit T1;
+server 2; begin T2; read y; commit T2;
+server 3; begin T3; read y; commit T3;
+server 0; begin T4; read y; commit T4;

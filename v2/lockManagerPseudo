@@ -1,0 +1,9 @@
+
+getlocks {
+  setlocklist()
+  while (!checkVotes()) {
+  tryGetLocks();
+  }
+  hardlock = false;
+  return true;
+}
