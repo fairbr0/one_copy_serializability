@@ -18,6 +18,7 @@ public class LockManager {
   private Boolean lockedVotesY;
   private Logger logger;
 	private Boolean inTransaction;
+	private int transactionNumber;
 
   public LockManager(int r, int w, Server server, int initalVotes, int serverNumber, Logger logger) {
     this.w = w;
@@ -30,11 +31,13 @@ public class LockManager {
     this.lockedVotesY = false;
     this.logger = logger;
 		this.inTransaction = false;
+		this.transactionNumber = 0;
   }
 
-  public boolean getLocks(LinkedList<Lock> locklist) throws IOException {
+  public boolean getLocks(LinkedList<Lock> locklist, int transactionNumber) throws IOException {
     //to implement : the quorum protocol
     this.locklist = locklist;
+		this.transactionNumber = transactionNumber;
     log("<lm> About to request votes for locks: " + locklist.toString());
     //prepare the message to request lock
     for (Lock l : locklist) {
