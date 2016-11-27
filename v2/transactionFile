@@ -1,6 +1,10 @@
 //This file specifies a single transaction
 
 server 0; begin T1; read y; commit T1;
-server 1; begin T2; read y; commit T2;
-server 2; begin T3; read y; commit T3;
-server 3; begin T4; read y; commit T4;
+server 0; begin T2; read y; commit T2;
+server 0; begin T6; read y; commit T6;
+server 0; begin T4; read y; commit T4;
+server 1; begin T7; read y; commit T7;
+server 1; begin T8; read y; commit T8;
+server 1; begin T3; y = 100; write y; commit T3;
+server 1; begin T10; read y; commit T10;

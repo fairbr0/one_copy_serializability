@@ -3,22 +3,24 @@
 
 //Test 1
 server 0; begin T1; read x; commit T1;
-//Got fucked
+// Works
 
 //Test 2
 server 0; begin T1; read y; commit T1;
 server 1; begin T2; read y; commit T2;
-//java.io.OptionalDataException
+// Works
 
 //Test 3
 server 0; begin T1; read y; commit T1;
 server 1; begin T2; read y; commit T2;
 server 2; begin T3; read y; commit T3;
 server 3; begin T4; read y; commit T4;
+//works
 
 //Test 4
 server 0; begin T1; read y; commit T1;
 server 0; begin T2; read y; commit T2;
+// Works
 
 //Test 5
 server 0; begin T1; read y; commit T1;

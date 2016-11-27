@@ -125,7 +125,7 @@ public class DataManager {
     log("<DM> Waiting for ACK's");
     for (int i = 0; i < n; i++) {
       Message rec = server.getServerResponseMessage();
-			log("<DM> " + rec.toString());
+			log("<DM> ACK from " + rec.toString());
       Flag[] recFlags = rec.getFlags();
       if (!FlagChecker.containsFlag(recFlags, Flag.ACK)) {
         throw new IOException();

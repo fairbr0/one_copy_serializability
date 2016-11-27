@@ -188,7 +188,7 @@ public class LockManager {
       if (item.getLock() == LOCK_TYPE.WRITE) {
         votesToSend.replace(data, votes.get(data));
         this.votes.replace(data, 0);
-      } else if (item.getLock() == LOCK_TYPE.READ && !this.softlock) {
+      } else if (item.getLock() == LOCK_TYPE.READ) {
         votesToSend.replace(data, 1);
         this.votes.replace(data, this.votes.get(data) - 1);
       } else {

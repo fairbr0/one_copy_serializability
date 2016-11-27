@@ -19,6 +19,7 @@ class Server {
 	private int portNumber;
 	private int serverNumber;
 	public int numOfServers;
+	private boolean locked;
 
 	public Server(int serverNumber, Logger logger) throws IOException {
 		this.logger = logger;  //Here we want to document what type of server this is
@@ -197,11 +198,16 @@ class Server {
   //send message to server;
   public void requestToServer(Message message, int i) {
     try {
+			while (getOutputStreamLock()) {
+				//block
+			}
+			lockOutputStream();
       log("<server> Sending request to server " + i);
       Socket socket = getCorrectSocket(i);
       ObjectOutputStream os = getCorrectStream(i);
       os.writeObject(message);
       os.flush();
+			unlockOutputStream();
     } catch(Exception e) {
       e.printStackTrace();
     }
@@ -271,6 +277,18 @@ class Server {
   public void close() {
     this.isClosing = true;
   }
+
+	private synchronized void unlockOutputStream() {
+		this.locked = false;
+	}
+
+	private synchronized void lockOutputStream() {
+		this.locked = true;
+	}
+
+	private synchronized boolean getOutputStreamLock() {
+		return this.locked;
+	}
 
   public static InetSocketAddress[] parseAddresses(String input) {
 		if (input.equals("NULL")) {
