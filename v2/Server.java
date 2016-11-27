@@ -10,7 +10,7 @@ class Server {
   private Thread serverListenerThread;
   private boolean isClosing;
   private Socket servers[];
-	private ObjectOutputStream serverOutputStreams[];
+	private ObjectOutputStream streams[];
 	private SocketWrapper wrappedServers[];
 	private Logger logger;
 	private LinkedList<Message> requestQueue;
@@ -35,8 +35,9 @@ class Server {
   }
 
 	public void connectServers(InetSocketAddress[] servers, int serverNumber) throws IOException{
-		System.out.println("Connecting to servers method called");
+		System.out.println("Connecting to all servers");
     this.servers = new Socket[servers.length];
+		this.streams = new ObjectOutputStream[servers.length];
 		this.wrappedServers = new SocketWrapper[servers.length];
 
 		AtomicInteger counter = new AtomicInteger(0);
@@ -47,7 +48,7 @@ class Server {
       while (!this.isClosing()) {
         try {
           //add socket to array
-          log("<server> Listening for server connections" + k + " on " + portNumber);
+          log("<server> Listening for server connections " + k + " on " + portNumber);
           Socket socket = serverSocket.accept();
           log("<server> Server " + k + " connected");
           socket.setTcpNoDelay(true);
@@ -110,30 +111,31 @@ class Server {
 			initialRequestToServer(m);
 	}
 
-	public void printWrappedServers() {
-		for (int i=0; i<wrappedServers.length; i++) {
-			System.out.println(wrappedServers[i].getSocket().getPort() +  " " + wrappedServers[i].getSocket().getLocalPort() + " " + wrappedServers[i].getServerNumber());
-		}
-	}
-
   //listen on given socket for client activity
   public void listenServer(int i) {
     Thread listenThread = new Thread(() -> {
       try {
+				try {
+					Thread.sleep(1000);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				Socket s = servers[i];
+				ObjectInputStream is = new ObjectInputStream(s.getInputStream());
         do {
-          Socket s = servers[i];
-          ObjectInputStream is = new ObjectInputStream(s.getInputStream());
           log("<server> Listening for server messages");
+
           Message recieved = (Message)is.readObject();
 					if(FlagChecker.containsFlag(recieved.getFlags(), Flag.HAND)) {
 						Object serverNumber = recieved.getMessage();
 						int serverNum = (Integer) serverNumber;
-						wrappedServers[i] = new SocketWrapper(servers[i], serverNum);
+						wrappedServers[i] = new SocketWrapper(servers[i], serverNum, streams[i]);
 					} else {
           	handleServerRequest(recieved, i);
 					}
         } while (!isClosing());
-      } catch (Exception e) {
+      } catch (ClassCastException g) {
+			} catch (Exception e) {
         e.printStackTrace();
       }
     });
@@ -181,9 +183,9 @@ class Server {
       for (int i = 0; i < servers.length; i++) {
 				if(servers[i] != null){
 		      Socket socket = servers[i];
-		      ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
-		      os.writeObject(message);
-		      os.flush();
+		      streams[i] = new ObjectOutputStream(socket.getOutputStream());
+		      streams[i].writeObject(message);
+		      streams[i].flush();
 				}
       }
 			log("<server> Connection broadcast complete");
@@ -197,7 +199,7 @@ class Server {
     try {
       log("<server> Sending request to server " + i);
       Socket socket = getCorrectSocket(i);
-      ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
+      ObjectOutputStream os = getCorrectStream(i);
       os.writeObject(message);
       os.flush();
     } catch(Exception e) {
@@ -208,7 +210,7 @@ class Server {
 	private ObjectOutputStream getCorrectStream(int i) {
 		for (int j=0; j<wrappedServers.length; j++) {
 			if(wrappedServers[j].getServerNumber() == i) {
-				return wrappedServers[j].getOutputStream();
+				return wrappedServers[j].getObjectOutputStream();
 			}
 		}
 		return null;
@@ -286,6 +288,6 @@ class Server {
 
 	private void log(String message) throws IOException {
 		//System.out.println(message);
-		logger.writeLog(message);
+		//logger.writeLog(message);
 	}
 }

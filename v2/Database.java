@@ -19,9 +19,11 @@ public class Database {
 
 	private String databaseFilePath;
 	private int serverNumber;
+	private Logger logger;
 
-	public Database(int serverNumber) throws IOException {
+	public Database(int serverNumber, Logger logger) throws IOException {
 		this.databaseFilePath = "Db"+ Integer.toString(serverNumber) +".txt";
+		this.logger = logger;
 		if (!this.databaseExists()) {
 			this.createDatabase();
 		}
@@ -35,8 +37,8 @@ public class Database {
 	private final void createDatabase() throws IOException {
 		File f = new File(databaseFilePath);
 		f.createNewFile();
-		System.out.println("Creating a new file");
-		System.out.println(this.databaseFilePath);
+		log("<Database> Creating a new database file");
+		//System.out.println(this.databaseFilePath);
 		Path path = Paths.get(this.databaseFilePath, new String[0]);
 		BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
 		try {
@@ -44,7 +46,7 @@ public class Database {
 			writer.newLine();
 			writer.write("y=0");
 		} finally {
-			System.out.println("Write successfull");
+			log("<Database> Write successfull");
 			writer.close();
 		}
 	}
@@ -80,9 +82,9 @@ public class Database {
 
 
 			while (line!=null){
-				System.out.println("While loop called");
-				System.out.println("line = " + line.split("=")[0]);
-				System.out.println("object = " + object.split("=")[0]);
+				//System.out.println("While loop called");
+				//System.out.println("line = " + line.split("=")[0]);
+				//System.out.println("object = " + object.split("=")[0]);
 			  if ((line.split("=")[0]).equals(object.split("=")[0])) {
 					lines[counter] = object;
 				} else {
@@ -98,13 +100,22 @@ public class Database {
 			BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
 
 			for (int i=0; i<lines.length; i++){
-				System.out.println(lines[i]);
+				//System.out.println(lines[i]);
 				writer.write(lines[i]);
 				writer.newLine();
 			}
 			writer.flush();
 			writer.close();
 		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void log(String message) {
+		try {
+			System.out.println(message);
+			this.logger.writeLog(message);
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}

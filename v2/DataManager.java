@@ -13,7 +13,7 @@ public class DataManager {
   int serverNumber;
 
   public DataManager(int serverNumber, Logger logger, Server server) throws IOException {
-      this.db = new Database(serverNumber);
+      this.db = new Database(serverNumber, logger);
       this.logger = logger;
       this.server = server;
       this.serverNumber = serverNumber;
@@ -26,18 +26,15 @@ public class DataManager {
   public LinkedList<String> runTransaction() throws IOException{
     VarList variables = new VarList();
     VarList writtenVars = new VarList();
-    log("<dm> Locks all aquired. Running transaction");
+    log("<DM> Locks all aquired. Running transaction");
     //todo : Copy the database file. Run each transaction line on the database file and
     // update as needed. Once read , write. If interupted, revert to the copy.
 
     for (String query : transaction) {
       String[] parts = query.split(" ");
-      for (int i = 0; i < parts.length; i++) {
-        System.out.println(parts[i]);
-      }
       if (parts[0].equals("begin")) {
         //logic to save old version if needed
-        log("<dm> Begin Transation " + parts[1]);
+        log("<DM> Begin Transation " + parts[1]);
       }
 
       else if (parts[0].equals("read")) {
@@ -45,7 +42,7 @@ public class DataManager {
         //get value from the database
         int value = this.db.readDatabase(data);
         variables.setVar(data, value);
-        log("<dm> Read " + data);
+        log("<DM> Read " + data + " : " + value);
       }
 
       else if (parts[0].equals("write")) {
@@ -54,13 +51,13 @@ public class DataManager {
         String q = data + "=" + newValue;
         this.db.writeDatabase(q);
         writtenVars.setVar(data, newValue);
-        log("<dm> Wrote " + data + " locally");
+        log("<DM> Wrote " + data + " locally");
         //write to database
       }
 
       else if (parts[0].equals("commit")) {
         //logic to make results perminent
-        log("<dm> Committing Transation");
+        log("<DM> Committing Transation");
         if (writtenVars.size() > 0) {
           boolean result = propogateWrites(writtenVars);
 
@@ -73,7 +70,7 @@ public class DataManager {
         String data = parts[0];
         int value = Integer.parseInt(parts[2]);
         variables.setVar(data, value);
-        log("<dm> Setting " + data + " to value " + value);
+        log("<DM> Setting " + data + " to value " + value);
         // here are commands like x = 20. Will need to get clear list of arshad what can be
       }
     }
@@ -95,13 +92,13 @@ public class DataManager {
     Thread thread = new Thread(() -> {
       try {
         while (true) {
-					log("<dm> got a listen write command");
+					log("<DM> Got a listen write command");
           Message m = server.getServerWriteMessage();
           VarList varlist = (VarList) m.getMessage();
 					int sender = m.serverNumber;
           for (Var var : varlist.getVarList()) {
             this.db.writeDatabase(var.data +"="+ Integer.toString(var.value));
-						log("<dm> Wrote recieved changes to the database with data = " + var.data  + " and value = " + var.value);
+						log("<DM> Wrote recieved changes to the database with data = " + var.data  + " and value = " + var.value);
           }
           Flag[] flags = {Flag.RSP, Flag.ACK};
           Message resp = new Message<String>(flags, "", this.serverNumber);
@@ -118,16 +115,17 @@ public class DataManager {
   }
 
   public boolean propogateWrites(VarList vars) throws IOException {
-    log("<dm> Propogating Writes to servers.");
+    log("<DM> Propogating Writes to servers.");
     Flag[] flags = new Flag[1];
     flags[0] = Flag.WRITE;
     Message m = new Message<VarList>(flags, vars, this.serverNumber);
 
     int n = server.broadcast(m);
 
+    log("<DM> Waiting for ACK's");
     for (int i = 0; i < n; i++) {
       Message rec = server.getServerResponseMessage();
-			log("<dm> " + rec.toString());
+			log("<DM> " + rec.toString());
       Flag[] recFlags = rec.getFlags();
       if (!FlagChecker.containsFlag(recFlags, Flag.ACK)) {
         throw new IOException();
@@ -136,7 +134,7 @@ public class DataManager {
 
     }
 
-		log("<dm> Got ack from all servers");
+		log("<DM> Got ack from all servers");
 
     return true;
   }

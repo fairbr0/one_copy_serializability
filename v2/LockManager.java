@@ -34,8 +34,10 @@ public class LockManager {
   public boolean getLocks(LinkedList<Lock> locklist, int transactionNumber) throws IOException {
     this.locklist = locklist;
     this.transactionNumber = transactionNumber;
+    log("<LM> Getting locks");
     setInitialVoteList();
     aquireLock();
+    log("<LM> Hard Lock enabled");
     this.hardlock = true;
     return true;
   }
@@ -43,6 +45,7 @@ public class LockManager {
   public boolean releaseLocks(LinkedList<String> listToReset) {
     // values is a list of values which were updated in the transaction.
     // must propogate the update
+    log("<LM> Releasing locks");
 		Flag[] flags = new Flag[2];
 		flags[0] = Flag.RESET;
 		flags[1] = Flag.REQ;
@@ -58,12 +61,10 @@ public class LockManager {
     		this.votes.put(variable, this.initalVotes);
     	}
     }
-
-		log("<lm>Hashmap size is now " + Integer.toString(this.votes.size()));
-    log("<lm> Releasing Locks");
-		log("The number of votes I have for variable x is " + this.votes.get("x"));
 		this.hardlock = false;
     this.softlock = false;
+    log("<LM> Hard Lock Released");
+    log("<LM> Soft Lock Released");
     return true;
   }
 
@@ -77,13 +78,12 @@ public class LockManager {
 
           Message newMessage;
 
-          ////FFFLLLAAGGGSSSS
           if (FlagChecker.containsFlag(incommingMessage.flags, Flag.SERVERNUMBER)) {
             Flag[] flags = new Flag[2];
             flags[0] = Flag.ACK;
             flags[1] = Flag.RSP;
             newMessage = new Message<Integer>(flags, this.serverNumber, this.serverNumber);
-            log("<lm> Responding to server with server number: " + newMessage.toString());
+            log("<LM> Responding to server with server number: " + newMessage.toString());
             server.requestToServer(newMessage, serverNumber);
           }
 
@@ -99,21 +99,20 @@ public class LockManager {
               if (this.hardlock && contains(this.locklist, item.getData())) {
                 votesToSend.put(item.getData(), -1);
                 flags[0] = Flag.REJ;
-                log("We've got a hard on");
+                log("<LM>Sending a rejection as Hard Lock is on");
               } else if (this.softlock && contains(this.locklist, item.getData()) && voteRequestTransaction < this.transactionNumber) {
                 setSendVotes(votesToSend, item);
-                log("We've got a softie and the other server is more important than is");
+                log("<LM> Sending votes as the transaction ID is less than the transaction we are processing");
               } else if (this.softlock && contains(this.locklist, item.getData()) && voteRequestTransaction > this.transactionNumber) {
                 votesToSend.put(item.getData(), -1);
                 flags[0] = Flag.REJ;
-                log("We've still got a softie but the other server is now worse than us - therefore dont send our votes.");
+                log("<LM> NOT sending votes as the transaction ID is greater than the transaction we are processing");
               } else {
                 setSendVotes(votesToSend, item);
               }
 
             }
-
-            log("<lm> sending the message: " + votesToSend.toString());
+            log("<LM> Vote response sent to server " + incommingServerNumber);
             newMessage = new Message<HashMap>(flags, votesToSend, this.serverNumber);
             server.requestToServer(newMessage, incommingServerNumber);
           }
@@ -125,12 +124,9 @@ public class LockManager {
 
             while (itter.hasNext()){
               String itemName = itter.next();
-              log("reset for item " + itemName);
+              log("<LM> Reseting votes for item " + itemName);
               this.votes.put(itemName, this.initalVotes);
             }
-            //here we dont want to be redeclaring the hash map we just want to get the object and reset the values to 0.
-
-            log("<lm> Hashmap size is now " + Integer.toString(this.votes.size()));
           }
 
         }
@@ -140,9 +136,11 @@ public class LockManager {
     });
     thread.start();
   }
-  //method with all the aquisition logic
+
   private void aquireLock() throws IOException {
+    log("<LM> Aquiring Locks");
     this.softlock = true;
+    log("<LM> Soft Lock enabled");
     while (!checkVotes()) {
       for (int i = 0; i < server.numOfServers; i++) {
 
@@ -159,6 +157,7 @@ public class LockManager {
           Message<HashMap> response = server.getServerResponseMessage();
           Flag[] responseFlags = response.getFlags();
           HashMap<String, Integer> payload = response.getMessage();
+          log("<LM> Vote response recieved from server " + response.serverNumber);
 
           if (FlagChecker.containsFlag(responseFlags, Flag.ACK)) {
             addVoteList(newLocklist, payload);
@@ -184,7 +183,6 @@ public class LockManager {
     if (!this.votes.containsKey(data)) {
       this.votes.put(data, 0);
       votesToSend.put(data, this.initalVotes);
-      log("<lm> Sending votes for item " + data);
     } else if (this.votes.containsKey(data) && (this.votes.get(data) > 0)) {
       votesToSend.put(data, 0);
       if (item.getLock() == LOCK_TYPE.WRITE) {
@@ -201,6 +199,7 @@ public class LockManager {
     } else {
       throw new MattBradburyException("Unknown data item");
     }
+    log("<LM> Sending " + votesToSend.get(data) + " votes for item " + data );
   }
 
   private boolean contains(LinkedList<Lock> list, String item) {
@@ -240,6 +239,7 @@ public class LockManager {
 	}
 
   private void setInitialVoteList() {
+    log("<LM> Initializing vote list");
     for (Lock l : this.locklist) {
 			if (!this.votes.containsKey(l.getData())) {
 				this.votes.put(l.getData(), this.initalVotes);
@@ -249,30 +249,23 @@ public class LockManager {
 
   private LinkedList<Lock> createServerMessageLockList() {
     LinkedList<Lock> tempLockList = new LinkedList<Lock>();
-    log("The size of the tempLockList is " + Integer.toString(locklist.size()));
     Iterator<Lock> it = this.locklist.iterator();
     while (it.hasNext()){
-      //log("At position " + k);
       Lock item = it.next();
       String itemName = item.getData();		// x or y
       LOCK_TYPE lockType = item.getLock();	//Lock Type
       if(lockType == LOCK_TYPE.READ) {
         if (this.votes.get(itemName) < r) {
           tempLockList.add(item);
-          log("item added");
-          log(Integer.toString(locklist.size()));
         }
       } else if (lockType == LOCK_TYPE.WRITE) {
         if (this.votes.get(itemName) < w) {
           tempLockList.add(item);
-          log("item added");
-          log(Integer.toString(locklist.size()));
         }
       } else {
         throw new MattBradburyException();
       }
     }
-    log("List of locks to aquire completed");
     return tempLockList;
   }
 
@@ -281,9 +274,9 @@ public class LockManager {
       Lock item = locklist.get(j);
       String itemName = item.getData();
       int numberOfVotes = votes.get(itemName);
-      log("Item from the locklist is " + itemName + " and number of votes given are " + numberOfVotes);
+      log("<LM> Item from the locklist is " + itemName + " and number of votes given are " + numberOfVotes);
       this.votes.put(itemName, this.votes.get(itemName) + numberOfVotes);
-      log("The number of votes in the system for item " + itemName + " is now " + this.votes.get(itemName));
+      log("<LM> The number of votes in the system for item " + itemName + " is now " + this.votes.get(itemName));
     }
   }
 
@@ -293,7 +286,7 @@ public class LockManager {
       Lock item = locklist.get(j);
       String itemName = item.getData();
       int numberOfVotes = votes.get(itemName);
-      log("Item from the locklist is " + itemName + " and number of votes given are " + numberOfVotes);
+      log("<LM> Item from the locklist is " + itemName + " and number of votes given are " + numberOfVotes);
       if (numberOfVotes >= 0) {
         this.votes.put(itemName, this.votes.get(itemName) + numberOfVotes);
       } else if (numberOfVotes == -1) {
@@ -302,7 +295,7 @@ public class LockManager {
 
         continue;
       }
-      log("The number of votes in the system for item " + itemName + " is now " + this.votes.get(itemName));
+      log("<LM> The number of votes in the system for item " + itemName + " is now " + this.votes.get(itemName));
     }
   }
 

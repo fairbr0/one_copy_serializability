@@ -6,7 +6,7 @@ public class DatabaseTester {
 
 	public DatabaseTester() {
 		try {
-			this.a = new Database(0);
+			this.a = new Database(0, null);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -55,6 +55,7 @@ class Site {
 			this.dm.listenWriteCommand();
     	this.listenServerMessages();
     	this.processTransactions();
+      log("<Site> All trasactions completed");
 	  } catch (InterruptedException e) {
 		  e.printStackTrace();
 	  }
@@ -78,6 +79,7 @@ class Site {
   //method to process the list of transactions.
   public void processTransactions() throws IOException {
     for (int i = 0; i < this.transactions.size(); i++) {
+      log("<Site> Beginning transaction processing");
       String transaction = this.transactions.get(i);
       //set transaction on the manager
       LinkedList<String> queries = tm.setTransaction(transaction);
@@ -93,7 +95,6 @@ class Site {
       if (gotLocks) {
         dm.setTransaction(queries);
         LinkedList<String> varlist = dm.runTransaction();
-				System.out.println("Transaction complete");
 				lm.releaseLocks(varlist);
       } else {
         //super nasty for loop ahhaha
@@ -105,6 +106,7 @@ class Site {
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
+      log("<Site> Finished Processing transaction");
     }
   }
 
@@ -134,6 +136,14 @@ class Site {
     }
   }
 
+  private void log(String message) {
+    try {
+      System.out.println(message);
+		  logger.writeLog(message);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
 
 }
 

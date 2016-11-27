@@ -32,7 +32,7 @@ public class TransactionManager {
   public LinkedList<Lock> getLockInfo() {
     LinkedList<Lock> lockInfo = new LinkedList<Lock>();
 
-    log("<tm> Getting locks for 2PL");
+    log("<TM> Discovering locks to get in 2PL");
     // get the parts of the query;
     for (String query : this.queries) {
       String[] parts = query.split(" ");
@@ -47,11 +47,11 @@ public class TransactionManager {
       } else if(parts[0].equals("begin")) {
 				String number = parts[1].replace("T", "");
 				this.transactionNumber = Integer.parseInt(number);
-				System.out.println("The transaction number is " + this.transactionNumber);
+				log("<TM> The transaction number is " + this.transactionNumber);
 			}
     }
 
-    log("<tm> Locks required: " + lockInfo.toString());
+    log("<TM> Locks required: " + lockInfo.toString());
     return lockInfo;
 
   }
