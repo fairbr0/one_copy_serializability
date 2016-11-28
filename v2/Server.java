@@ -198,10 +198,10 @@ class Server {
   //send message to server;
   public void requestToServer(Message message, int i) {
     try {
-			while (getOutputStreamLock()) {
-				//block
-			}
-			lockOutputStream();
+			boolean locked = false;
+			do {
+				locked = getOutputStreamLock();
+			} while (locked);
       log("<server> Sending request to server " + i);
       Socket socket = getCorrectSocket(i);
       ObjectOutputStream os = getCorrectStream(i);
@@ -282,12 +282,13 @@ class Server {
 		this.locked = false;
 	}
 
-	private synchronized void lockOutputStream() {
-		this.locked = true;
-	}
-
 	private synchronized boolean getOutputStreamLock() {
-		return this.locked;
+		if (this.locked == true) {
+			return true;
+		} else {
+			this.locked = true;
+			return false;
+		}
 	}
 
   public static InetSocketAddress[] parseAddresses(String input) {

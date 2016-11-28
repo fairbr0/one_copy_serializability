@@ -66,11 +66,38 @@ public class DataManager {
         }
       }
 
-      else {
+      else if (parts[1].equals("+")) {
         String data = parts[0];
         int value = Integer.parseInt(parts[2]);
+        if (variables.getVar(data) == null) {
+          variables.setVar(data, 0);
+        }
+        variables.setVar(data, variables.getVar(data) + value);
+        log("<DM> Added " + value + " to item " + data);
+      }
+
+      else if (parts[1].equals("-")) {
+        String data = parts[0];
+        int value = Integer.parseInt(parts[2]);
+        if (variables.getVar(data) == null) {
+          variables.setVar(data, 0);
+        }
+        variables.setVar(data, variables.getVar(data) - value);
+        log("<DM> Subtracted " + + " from item " + );
+      }
+
+      else if (parts[1].equals("=")) {
+        String data = parts[0];
+        int value = Integer.parseInt(parts[2]);
+        if (variables.getVar(data) == null) {
+          variables.setVar(data, 0);
+        }
         variables.setVar(data, value);
-        log("<DM> Setting " + data + " to value " + value);
+        log("<DM> Set " + data + " to value " + value);
+      }
+
+      else {
+        log("<DM> Unrecognised query");
         // here are commands like x = 20. Will need to get clear list of arshad what can be
       }
     }

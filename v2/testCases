@@ -31,6 +31,7 @@ server 1; begin T7; read y; commit T7;
 server 1; begin T8; read y; commit T8;
 server 1; begin T3; y = 100; write y; commit T3;
 server 1; begin T10; read y; commit T10;
+// Works
 
 //Test 6
 server 1; begin T1; y = 100; write y; commit T1;
