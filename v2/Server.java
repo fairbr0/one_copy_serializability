@@ -252,6 +252,7 @@ class Server {
 				e.printStackTrace();
 			}
 		}
+		System.out.println(requestQueue.size());
 		log("<server> Message popped off the server queue");
 		return requestQueue.pop();
 

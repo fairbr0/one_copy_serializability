@@ -38,7 +38,6 @@ public class LockManager {
     setInitialVoteList();
     aquireLock();
     log("<LM> Hard Lock enabled");
-    this.hardlock = true;
     return true;
   }
 
@@ -214,27 +213,33 @@ public class LockManager {
   }
 
   private boolean checkVotes() {
+  
+    	this.hardlock = true;
 
 		for (Lock l : this.locklist) {
 			if (!this.votes.containsKey(l.getData())) {
 				log("<LM> CHECKVOTES RESULT = FALSE");
+				this.hardlock = false;
 				return false;
 			} else {
 				int votes = this.votes.get(l.getData());
 				if (l.getLock() == LOCK_TYPE.READ) {
 					if (votes < this.r) {
 						log("<LM> CHECKVOTES RESULT = FALSE");
+						this.hardlock = false;
 						return false;
 					}
 				} else {
 					if (votes < this.w) {
 						log("<LM> CHECKVOTES RESULT = FALSE");
+						this.hardlock = false;
 						return false;
 					}
 				}
 			}
     }
 		log("<LM> CHECKVOTES RESULT = TRUE");
+		
 		return true;
 	}
 

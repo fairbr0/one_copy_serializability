@@ -72,7 +72,7 @@ public class DataManager {
         if (variables.getVar(data) == null) {
           variables.setVar(data, 0);
         }
-        variables.setVar(data, variables.getVar(data) + value);
+        variables.setVar(data, variables.getVar(data).value + value);
         log("<DM> Added " + value + " to item " + data);
       }
 
@@ -82,8 +82,8 @@ public class DataManager {
         if (variables.getVar(data) == null) {
           variables.setVar(data, 0);
         }
-        variables.setVar(data, variables.getVar(data) - value);
-        log("<DM> Subtracted " + + " from item " + );
+        variables.setVar(data, variables.getVar(data).value - value);
+        log("<DM> Subtracted " + data + " from item " + value);
       }
 
       else if (parts[1].equals("=")) {
