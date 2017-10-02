@@ -1,0 +1,141 @@
+//////////////////////////////////////////////////////////////////////////////
+//Single variables
+
+//Test 1
+server 0; begin T1; read x; commit T1;
+// Works DCS
+
+//Test 2
+server 0; begin T1; read y; commit T1;
+server 1; begin T2; read y; commit T2;
+// Works DCS
+
+//Test 3
+server 0; begin T1; read y; commit T1;
+server 1; begin T2; read y; commit T2;
+server 2; begin T3; read y; commit T3;
+server 3; begin T4; read y; commit T4;
+//works DCS
+
+//Test 4
+server 0; begin T1; read y; commit T1;
+server 0; begin T2; read y; commit T2;
+// Works DCS
+
+//Test 5
+server 0; begin T1; read y; commit T1;
+server 0; begin T2; read y; commit T2;
+server 0; begin T6; read y; commit T6;
+server 0; begin T4; read y; commit T4;
+server 1; begin T7; read y; commit T7;
+server 1; begin T8; read y; commit T8;
+server 1; begin T3; y = 100; write y; commit T3;
+server 1; begin T10; read y; commit T10;
+// Works DCS
+
+//Test 6
+server 1; begin T1; y = 100; write y; commit T1;
+server 1; begin T2; y = 200; write y; commit T2;
+server 1; begin T3; y = 300; write y; commit T3;
+// Works DCS
+
+//Test 7
+server 0; begin T1; y = 100; write y; commit T1;
+server 1; begin T2; y = 200; write y; commit T2;
+server 2; begin T3; y = 300; write y; commit T3;
+// Works DCS
+
+//Test 8
+server 0; begin T1; y = 100; write y; commit T1;
+server 0; begin T2; y = 200; write y; commit T2;
+// Works DCS
+
+//Test 9
+server 0; begin T1; read y; y = 100; write y; commit T1;
+server 0; begin T2; read y; y = 200; write y; commit T2;
+//Works DCS
+
+//Test 10
+server 0; begin T1; read y; y = 100; write y; read y; y = 200; write y; commit T1;
+// Works DCS
+
+//Test 11
+server 0; begin T1; read y; y = 100; write y; read y; y = 200; write y; commit T1;
+server 1; begin T2; read y; y = 300; write y; read y; y = 400; write y; commit T2;
+//works DCS
+
+//////////////////////////////////////////////////////////////////////////////
+//Multiple variables
+
+//Test 1
+server 0; begin T1; read y; commit T1;
+server 0; begin T2; read x; commit T2;
+// works DCS
+
+//Test 2
+server 0; begin T1; read y; commit T1;
+server 0; begin T2; read x; commit T2;
+server 0; begin T3; read y; commit T3;
+server 0; begin T4; read x; commit T4;
+// works DCS
+
+//Test 3
+server 0; begin T1; read y; commit T1;
+server 0; begin T2; read x; commit T2;
+server 1; begin T3; read y; commit T3;
+server 1; begin T4; read x; commit T4;
+//works DCS
+
+//Test 4
+server 0; begin T1; read y; commit T1;
+server 1; begin T2; read x; commit T2;
+server 2; begin T3; read y; commit T3;
+server 3; begin T4; read x; commit T4;
+server 0; begin T5; read x; commit T5;
+server 1; begin T6; read y; commit T6;
+server 2; begin T7; read x; commit T7;
+server 3; begin T8; read y; commit T8;
+//works DCS
+
+//Test 5
+server 0; begin T1; read y; read x; commit T1;
+//works DCS
+
+//Test 6
+server 0; begin T1; read x; read y; commit T1;
+server 1; begin T2; read x; read y; commit T2;
+//works DCS
+
+//Test 7
+server 1; begin T1; y = 100; write y; commit T1;
+server 1; begin T2; y = 200; write y; commit T2;
+server 1; begin T3; y = 300; write y; commit T3;
+// works DCS
+
+//Test 8
+server 1; begin T1; read y; y + 10; write y; commit T1;
+server 2; begin T2; x = 50; y - 10; write y; commit T2;
+server 3; begin T3; y = 300; read x; x - 2; write x; commit T3;
+//works DCS
+
+//Test 9
+server 0; begin T1; y = 100; write y; commit T1;
+server 1; begin T2; y = 200; write y; commit T2;
+server 2; begin T3; y = 300; write y; commit T3;
+// works squiffy. Some runs throw element not found exception, though the list size is 1???
+
+//Test 10
+server 0; begin T1; y = 100; write y; commit T1;
+server 1; begin T2; x = 200; write x; commit T2;
+server 2; begin T3; y = 300; write y; commit T3;
+
+//Test 11
+server 0; begin T1; y = 100; write y; commit T1;
+server 1; begin T2; x = 200; write x; commit T2;
+server 2; begin T3; y = 300; write y; commit T3;
+
+//Test 12
+server 0; begin T1; y = 100; write y; x = 250; write x; commit T1;
+server 1; begin T2; x = 200; write x; y = 150; write y; commit T2;
+server 2; begin T3; y = 300; write y; read x; commit T3;
+//works DCS
